@@ -4,6 +4,7 @@ from backend import models
 
 app = Flask(__name__)
 mongo = MongoClient("mongodb+srv://pranav22363:m6UrGZqKnMlcpARb@cluster0.5uvzn.mongodb.net/")
+db = mongo["App"]  
 
 @app.route('/')
 def homePage():
@@ -11,7 +12,6 @@ def homePage():
 
 @app.route('/addUser')
 def addUser():
-    db = mongo["App"]  
     userAccounts = db["UserAccounts"] 
     userAccounts.create_index("username", unique=True)
     
