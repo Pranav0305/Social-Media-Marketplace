@@ -1,0 +1,10 @@
+{% extends "layout.html" %}
+{% block title %}Your Profile{% endblock %}
+{% block content %}
+<h2>Your Profile</h2>
+<form method="POST">
+    <label>Username:</label> <input type="text" name="username" value="{{ user.username }}" required><br>
+    <label>Bio:</label> <textarea name="bio">{{ user.profile.bio }}</textarea><br>
+    <input type="submit" value="Update Profile">
+</form>
+{% endblock %}

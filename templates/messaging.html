@@ -1,0 +1,21 @@
+{% extends "layout.html" %}
+{% block title %}Direct Messaging{% endblock %}
+{% block content %}
+<h2>Direct Messaging</h2>
+<form method="POST">
+    <label>Recipient Username:</label> <input type="text" name="recipient" required><br>
+    <label>Message:</label> <textarea name="message" required></textarea><br>
+    <input type="submit" value="Send Message">
+</form>
+
+<h3>Your Messages</h3>
+<ul>
+    {% for msg in messages %}
+    <li>
+        <strong>From:</strong> {{ msg.sender_username }} |
+        <strong>To:</strong> {{ msg.recipient_username }}<br>
+        <strong>Message:</strong> {{ msg.message }}
+    </li>
+    {% endfor %}
+</ul>
+{% endblock %}

@@ -1,0 +1,30 @@
+<!doctype html>
+<html>
+<head>
+    <title>{% block title %}Social Media Platform{% endblock %}</title>
+</head>
+<body>
+    <nav>
+        <a href="{{ url_for('auth.login') }}">Login</a> |
+        <a href="{{ url_for('auth.register') }}">Register</a> |
+        <a href="{{ url_for('profile.profile') }}">Profile</a> |
+        <a href="{{ url_for('messaging.messages') }}">Messages</a>
+        {% if session.get('user_id') %}
+         | <a href="{{ url_for('auth.logout') }}">Logout</a>
+        {% endif %}
+    </nav>
+    <hr>
+    <div>
+        {% with messages = get_flashed_messages() %}
+          {% if messages %}
+            <ul>
+            {% for message in messages %}
+              <li>{{ message }}</li>
+            {% endfor %}
+            </ul>
+          {% endif %}
+        {% endwith %}
+        {% block content %}{% endblock %}
+    </div>
+</body>
+</html>

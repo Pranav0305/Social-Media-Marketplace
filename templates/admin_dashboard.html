@@ -1,0 +1,29 @@
+{% extends "layout.html" %}
+{% block title %}Admin Dashboard{% endblock %}
+{% block content %}
+<h2>Admin Dashboard</h2>
+<table border="1" cellpadding="5">
+    <tr>
+        <th>Email</th>
+        <th>Username</th>
+        <th>Status</th>
+        <th>Action</th>
+    </tr>
+    {% for user in users %}
+    <tr>
+        <td>{{ user.email }}</td>
+        <td>{{ user.username }}</td>
+        <td>{{ user.status }}</td>
+        <td>
+            {% if user.status == 'pending' %}
+            <form method="POST" action="{{ url_for('admin.approve_user', user_id=user._id) }}">
+                <input type="submit" value="Approve">
+            </form>
+            {% else %}
+            Approved
+            {% endif %}
+        </td>
+    </tr>
+    {% endfor %}
+</table>
+{% endblock %}
