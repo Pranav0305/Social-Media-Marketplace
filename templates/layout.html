@@ -7,7 +7,7 @@
     <nav>
         <a href="{{ url_for('auth.login') }}">Login</a> |
         <a href="{{ url_for('auth.register') }}">Register</a> |
-        <a href="{{ url_for('profile.profile') }}">Profile</a> |
+        <a href="{{ url_for('profile_bp.profile') }}">Profile</a> |
         <a href="{{ url_for('messaging.messages') }}">Messages</a>
         {% if session.get('user_id') %}
          | <a href="{{ url_for('auth.logout') }}">Logout</a>
