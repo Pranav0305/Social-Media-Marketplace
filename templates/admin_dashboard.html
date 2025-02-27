@@ -1,11 +1,14 @@
 {% extends "layout.html" %}
 {% block title %}Admin Dashboard{% endblock %}
+
 {% block content %}
 <h2>Admin Dashboard</h2>
+
 <table border="1" cellpadding="5">
     <tr>
         <th>Email</th>
         <th>Username</th>
+        <th>Document</th>
         <th>Status</th>
         <th>Action</th>
     </tr>
@@ -13,17 +16,28 @@
     <tr>
         <td>{{ user.email }}</td>
         <td>{{ user.username }}</td>
+        <td>
+            {% if user.document %}
+                <a href="{{ url_for('static', filename='uploads/' + user.document) }}" target="_blank">View Document</a>
+            {% else %}
+                No Document
+            {% endif %}
+        </td>
         <td>{{ user.status }}</td>
         <td>
             {% if user.status == 'pending' %}
-            <form method="POST" action="{{ url_for('admin.approve_user', user_id=user._id) }}">
-                <input type="submit" value="Approve">
-            </form>
+                <form method="POST" action="{{ url_for('admin.approve_user', user_id=user.id) }}">
+                    <input type="submit" value="Approve">
+                </form>
+                <form method="POST" action="{{ url_for('admin.reject_user', user_id=user.id) }}">
+                    <input type="submit" value="Reject" style="background-color: red; color: white;">
+                </form>
             {% else %}
-            Approved
+                Approved
             {% endif %}
         </td>
     </tr>
     {% endfor %}
 </table>
+
 {% endblock %}
