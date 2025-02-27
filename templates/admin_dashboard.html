@@ -13,31 +13,64 @@
         <th>Action</th>
     </tr>
     {% for user in users %}
-    <tr>
+    <tr id="user-row-{{ user._id }}">
         <td>{{ user.email }}</td>
         <td>{{ user.username }}</td>
         <td>
-            {% if user.document %}
-                <a href="{{ url_for('static', filename='uploads/' + user.document) }}" target="_blank">View Document</a>
+            {% if user.document and user.document != "" %}
+                <a href="{{ url_for('uploaded_file', filename=user.document) }}" target="_blank">View Document</a>
             {% else %}
-                No Document
+                <span style="color: red;">No Document</span>
             {% endif %}
         </td>
-        <td>{{ user.status }}</td>
-        <td>
+        <td id="status-{{ user._id }}">{{ user.status }}</td>
+        <td id="action-{{ user._id }}">
             {% if user.status == 'pending' %}
-                <form method="POST" action="{{ url_for('admin.approve_user', user_id=user.id) }}">
-                    <input type="submit" value="Approve">
-                </form>
-                <form method="POST" action="{{ url_for('admin.reject_user', user_id=user.id) }}">
-                    <input type="submit" value="Reject" style="background-color: red; color: white;">
-                </form>
+                <button class="approve-btn" data-url="{{ url_for('admin.approve_user', user_id=user._id) }}" data-userid="{{ user._id }}">Approve</button>
+                <button class="reject-btn" data-url="{{ url_for('admin.reject_user', user_id=user._id) }}" data-userid="{{ user._id }}" style="background-color: red; color: white;">Reject</button>
             {% else %}
-                Approved
+                <strong>{{ user.status | capitalize }}</strong>
             {% endif %}
         </td>
     </tr>
     {% endfor %}
 </table>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        document.querySelectorAll(".approve-btn, .reject-btn").forEach(button => {
+            button.addEventListener("click", function () {
+                const userId = this.getAttribute("data-userid");
+                const actionUrl = this.getAttribute("data-url");
+                const rowId = `user-row-${userId}`;
+                const statusCell = document.querySelector(`#${rowId} td[id^='status-']`);
+                const actionCell = document.querySelector(`#${rowId} td[id^='action-']`);
+
+                // Disable buttons to prevent multiple clicks
+                this.disabled = true;
+
+                fetch(actionUrl, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        statusCell.textContent = data.new_status;
+                        actionCell.innerHTML = `<strong>${data.new_status.charAt(0).toUpperCase() + data.new_status.slice(1)}</strong>`;
+                    } else {
+                        alert("Error: " + data.error);
+                        this.disabled = false; // Re-enable button if request fails
+                    }
+                })
+                .catch(error => {
+                    console.error("Error:", error);
+                    alert("An unexpected error occurred.");
+                    this.disabled = false; // Re-enable button if error occurs
+                });
+            });
+        });
+    });
+</script>
 
 {% endblock %}
