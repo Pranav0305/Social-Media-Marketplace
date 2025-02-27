@@ -13,11 +13,13 @@ from routes.auth import auth_bp
 from routes.admin import admin_bp
 from routes.profile import profile_bp
 from routes.messaging import messaging_bp
+from routes.home import home_bp
 
 app.register_blueprint(auth_bp)
 app.register_blueprint(admin_bp, url_prefix='/admin')
 app.register_blueprint(profile_bp)
 app.register_blueprint(messaging_bp)
+app.register_blueprint(home_bp)
 
 #not an actual route , this is just for testing if mongoDB is connected or not 
 @app.route('/dbtest')
@@ -30,6 +32,9 @@ def dbtest():
         return "Successfully connected to MongoDB!"
     except Exception as e:
         return f"Failed to connect to MongoDB: {str(e)}"
+@app.route('/')
+def home():
+    return render_template('home.html', current_user=current_user)
 
 if __name__ == '__main__':
     app.run(debug=True)
