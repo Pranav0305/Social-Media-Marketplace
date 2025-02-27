@@ -1,10 +1,45 @@
 {% extends "layout.html" %}
-{% block title %}Your Profile{% endblock %}
+{% block title %}Profile{% endblock %}
+
 {% block content %}
-<h2>Your Profile</h2>
-<form method="POST">
-    <label>Username:</label> <input type="text" name="username" value="{{ user.username }}" required><br>
-    <label>Bio:</label> <textarea name="bio">{{ user.profile.bio }}</textarea><br>
-    <input type="submit" value="Update Profile">
-</form>
+    {% if not user %}
+        <h2>You need to log in first.</h2>
+        <p><a href="{{ url_for('auth.login') }}">Login here</a> or <a href="{{ url_for('auth.register') }}">Register</a></p>
+    {% else %}
+        <h2>Welcome, {{ user.username }}!</h2>
+        <p>Email: {{ user.email }}</p>
+        <p>Status: <strong>{{ user.status }}</strong></p>
+
+        <!-- Profile Picture -->
+        <p>
+            {% if user.profile.profile_picture %}
+                <img src="{{ url_for('uploaded_file', filename=user.profile.profile_picture) }}" width="150" alt="Profile Picture">
+            {% else %}
+                <img src="{{ url_for('static', filename='default_profile.jpg') }}" width="150" alt="Default Profile Picture">
+            {% endif %}
+        </p>
+
+        <!-- Bio -->
+        <p><strong>Bio:</strong> {{ user.profile.bio or "No bio available." }}</p>
+
+        <!-- Update Profile Form -->
+        <h3>Edit Profile</h3>
+        <form method="POST" enctype="multipart/form-data">
+            <label for="bio">Bio:</label>
+            <textarea id="bio" name="bio">{{ user.profile.bio }}</textarea><br><br>
+
+            <label for="profile_picture">Upload Profile Picture:</label>
+            <input type="file" id="profile_picture" name="profile_picture" accept=".png, .jpg, .jpeg"><br><br>
+
+            <button type="submit">Update Profile</button>
+        </form>
+
+        <!-- Document Upload -->
+        <h3>Uploaded Document</h3>
+        {% if user.document %}
+            <p><a href="{{ url_for('uploaded_file', filename=user.document) }}" target="_blank">View Document</a></p>
+        {% else %}
+            <p>No document uploaded.</p>
+        {% endif %}
+    {% endif %}
 {% endblock %}
