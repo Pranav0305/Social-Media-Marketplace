@@ -7,17 +7,22 @@ from routes.profile import profile_bp
 from routes.messaging import messaging_bp
 from routes.home import home_bp
 from flask_login import UserMixin
+from werkzeug.middleware.proxy_fix import ProxyFix
+
 
 app = Flask(__name__)
+app.wsgi_app = ProxyFix(app.wsgi_app, x_proto=1, x_host=1)
+
 app.config.from_object(Config)
 app.secret_key = "your_secret_key" 
 
 mongo.init_app(app)
 UPLOAD_FOLDER = 'static/uploads/'
 
-@app.route('/uploads/<filename>') 
+@app.route('/uploads/<filename>')  
 def uploaded_file(filename):
     return send_from_directory(UPLOAD_FOLDER, filename)
+
 login_manager.init_app(app)  
 login_manager.login_view = "auth.login"  
 
@@ -39,4 +44,4 @@ app.register_blueprint(messaging_bp)
 app.register_blueprint(home_bp)
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run(ssl_context=('cert.pem', 'key.pem'), host='127.0.0.1', port=5000)
