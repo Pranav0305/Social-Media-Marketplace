@@ -1,7 +1,7 @@
 from flask import Blueprint, render_template, request, redirect, url_for, flash, session
 from werkzeug.security import generate_password_hash, check_password_hash
 from extensions import mongo
-
+import re
 auth_bp = Blueprint('auth', __name__)
 import os
 from flask import Blueprint, render_template, request, redirect, url_for, flash
@@ -15,6 +15,21 @@ from werkzeug.security import check_password_hash
 from extensions import mongo
 from bson import ObjectId
 
+import re 
+
+def validate_password(password):
+    """Checks if password meets security requirements"""
+    if len(password) < 8:
+        return "Password must be at least 8 characters long."
+    if not re.search(r"[A-Z]", password):
+        return "Password must contain at least one uppercase letter."
+    if not re.search(r"[a-z]", password):
+        return "Password must contain at least one lowercase letter."
+    if not re.search(r"\d", password):
+        return "Password must contain at least one number."
+    if not re.search(r"[!@#$%^&*(),.?\":{}|<>]", password):
+        return "Password must contain at least one special character (!@#$%^&*())."
+    return None  
 
 UPLOAD_FOLDER = 'static/uploads/'
 ALLOWED_EXTENSIONS = {'pdf', 'png', 'jpg', 'jpeg'}
@@ -26,23 +41,27 @@ class User(UserMixin):
 
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
-
 @auth_bp.route('/register', methods=['GET', 'POST'])
 def register():
     if request.method == 'POST':
         email = request.form.get('email')
         username = request.form.get('username')
         password = request.form.get('password')
-        document = request.files.get('document') 
+        document = request.files.get('document')
 
         existing_user = mongo.db.users.find_one({'username': username})
         if existing_user:
-            flash('Username already exists. Please choose a different one.')
+            flash('Username already exists. Please choose a different one.', 'danger')
+            return redirect(url_for('auth.register'))
+
+        # Validate password security (Backend Check)
+        password_error = validate_password(password)
+        if password_error:
+            flash(password_error, 'danger')
             return redirect(url_for('auth.register'))
 
         hashed_password = generate_password_hash(password)
 
-        
         document_filename = ''
         if document and allowed_file(document.filename):
             document_filename = secure_filename(document.filename)
@@ -61,10 +80,11 @@ def register():
         }
 
         mongo.db.users.insert_one(user_data)
-        flash('Registration successful. Please wait for admin approval.')
+        flash('Registration successful. Please wait for admin approval.', 'success')
         return redirect(url_for('auth.login'))
 
     return render_template('register.html')
+
 
 @auth_bp.route('/login', methods=['GET', 'POST'])
 def login():
