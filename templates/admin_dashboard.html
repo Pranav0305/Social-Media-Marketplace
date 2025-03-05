@@ -4,6 +4,20 @@
 {% block content %}
 <h2>Admin Dashboard</h2>
 
+<!-- Flash messages for login/logout -->
+{% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+        {% for category, message in messages %}
+            <p style="color: {% if category == 'danger' %}red{% else %}green{% endif %};">
+                {{ message }}
+            </p>
+        {% endfor %}
+    {% endif %}
+{% endwith %}
+
+<!-- Logout button -->
+<a href="{{ url_for('admin.logout') }}" style="float: right; background-color: red; color: white; padding: 5px 10px; text-decoration: none;">Logout</a>
+
 <table border="1" cellpadding="5">
     <tr>
         <th>Email</th>
@@ -60,13 +74,13 @@
                         actionCell.innerHTML = `<strong>${data.new_status.charAt(0).toUpperCase() + data.new_status.slice(1)}</strong>`;
                     } else {
                         alert("Error: " + data.error);
-                        this.disabled = false; // Re-enable button if request fails
+                        this.disabled = false; 
                     }
                 })
                 .catch(error => {
                     console.error("Error:", error);
                     alert("An unexpected error occurred.");
-                    this.disabled = false; // Re-enable button if error occurs
+                    this.disabled = false; 
                 });
             });
         });
