@@ -4,7 +4,7 @@
 {% block content %}
 <h2>Admin Dashboard</h2>
 
-<!-- Flash messages for login/logout -->
+
 {% with messages = get_flashed_messages(with_categories=true) %}
     {% if messages %}
         {% for category, message in messages %}
@@ -15,7 +15,7 @@
     {% endif %}
 {% endwith %}
 
-<!-- Logout button -->
+
 <a href="{{ url_for('admin.logout') }}" style="float: right; background-color: red; color: white; padding: 5px 10px; text-decoration: none;">Logout</a>
 
 <table border="1" cellpadding="5">
