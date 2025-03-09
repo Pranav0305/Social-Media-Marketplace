@@ -14,8 +14,15 @@ from flask_login import login_user, logout_user, UserMixin
 from werkzeug.security import check_password_hash
 from extensions import mongo
 from bson import ObjectId
+from gridfs import GridFS
 
 import re 
+auth_bp = Blueprint('auth', __name__)
+
+ALLOWED_EXTENSIONS = {'pdf', 'png', 'jpg', 'jpeg'}
+
+def allowed_file(filename):
+    return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
 def validate_password(password):
     """Checks if password meets security requirements"""
@@ -31,16 +38,6 @@ def validate_password(password):
         return "Password must contain at least one special character (!@#$%^&*())."
     return None  
 
-UPLOAD_FOLDER = 'static/uploads/'
-ALLOWED_EXTENSIONS = {'pdf', 'png', 'jpg', 'jpeg'}
-class User(UserMixin):
-    def __init__(self, user_data):
-        self.id = str(user_data["_id"])
-        self.username = user_data["username"]
-        self.email = user_data["email"]
-
-def allowed_file(filename):
-    return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 @auth_bp.route('/register', methods=['GET', 'POST'])
 def register():
     if request.method == 'POST':
@@ -54,29 +51,30 @@ def register():
             flash('Username already exists. Please choose a different one.', 'danger')
             return redirect(url_for('auth.register'))
 
-        # Validate password security (Backend Check)
         password_error = validate_password(password)
         if password_error:
             flash(password_error, 'danger')
             return redirect(url_for('auth.register'))
 
         hashed_password = generate_password_hash(password)
-
-        document_filename = ''
+        
+        # Initialize GridFS instance
+        fs = GridFS(mongo.db)
+        document_id = None
+        
         if document and allowed_file(document.filename):
-            document_filename = secure_filename(document.filename)
-            document.save(os.path.join(UPLOAD_FOLDER, document_filename))
-
+            filename = secure_filename(document.filename)
+            # Save the file to GridFS
+            document_id = fs.put(document.read(), filename=filename, content_type=document.content_type)
+            print("GridFS file stored with ID:", document_id)  # Debug log
+        
         user_data = {
             'email': email,
             'username': username,
             'password': hashed_password,
-            'status': 'pending',  
-            'profile': {
-                'profile_picture': '',
-                'bio': ''
-            },
-            'document': document_filename  
+            'status': 'pending',  # Admin approval required
+            'profile': {'profile_picture': '', 'bio': ''},
+            'document': str(document_id) if document_id else ''  # Save the GridFS file ID as string
         }
 
         mongo.db.users.insert_one(user_data)
