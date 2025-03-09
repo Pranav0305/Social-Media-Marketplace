@@ -1,6 +1,9 @@
 from flask import Blueprint, render_template, redirect, url_for, request, jsonify, session, flash
 from bson import ObjectId  
 from extensions import mongo
+from gridfs import GridFS 
+from flask import send_file
+
 
 admin_bp = Blueprint('admin', __name__)
 
@@ -41,7 +44,6 @@ def logout():
 @admin_bp.route('/')
 def admin_home():
     return redirect(url_for('admin.dashboard'))
-
 @admin_bp.route('/dashboard')
 @login_required
 def dashboard():
@@ -51,7 +53,6 @@ def dashboard():
 @admin_bp.route('/approve_user/<user_id>', methods=['POST'])
 @login_required
 def approve_user(user_id):
-   
     try:
         mongo.db.users.update_one({"_id": ObjectId(user_id)}, {"$set": {"status": "approved"}})
         return jsonify({"success": True, "new_status": "approved"})
@@ -61,9 +62,26 @@ def approve_user(user_id):
 @admin_bp.route('/reject_user/<user_id>', methods=['POST'])
 @login_required
 def reject_user(user_id):
-    
     try:
         mongo.db.users.update_one({"_id": ObjectId(user_id)}, {"$set": {"status": "rejected"}})
         return jsonify({"success": True, "new_status": "rejected"})
     except Exception as e:
         return jsonify({"success": False, "error": str(e)})
+
+# NEW: Admin-only route to view a document stored in GridFS
+@admin_bp.route('/document/<document_id>')
+@login_required
+def view_document(document_id):
+    fs = GridFS(mongo.db)
+    try:
+        # Retrieve the file from GridFS using its ObjectId
+        grid_out = fs.get(ObjectId(document_id))
+        return send_file(
+            grid_out,
+            download_name=grid_out.filename,
+            mimetype=grid_out.content_type,
+            as_attachment=False
+        )
+    except Exception as e:
+        flash("Unable to retrieve document: " + str(e), "danger")
+        return redirect(url_for('admin.dashboard'))
