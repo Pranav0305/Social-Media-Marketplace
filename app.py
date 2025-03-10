@@ -44,5 +44,7 @@ app.register_blueprint(messaging_bp)
 app.register_blueprint(home_bp)
 
 
+
 if __name__ == '__main__':
-    app.run(ssl_context=('cert.pem', 'key.pem'), port=5000, debug=False)
+    app.run(ssl_context=('cert.pem', 'key.pem'), host='0.0.0.0', port=5000, debug=False)
+
