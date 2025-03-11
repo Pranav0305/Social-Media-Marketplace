@@ -3,11 +3,10 @@ from bson import ObjectId
 from extensions import mongo
 from gridfs import GridFS 
 from flask import send_file
-
+from security.secure_logger import write_secure_log
 
 admin_bp = Blueprint('admin', __name__)
 
-# Hardcoded admin credentials (you can later store these securely in a database or environment variables)
 ADMIN_USERNAME = "admin"
 ADMIN_PASSWORD = "password123"
 
@@ -29,6 +28,7 @@ def login():
         if username == ADMIN_USERNAME and password == ADMIN_PASSWORD:
             session['admin_logged_in'] = True
             flash("Login successful!", "success")
+            write_secure_log("Admin", ADMIN_USERNAME, "logged in")
             return redirect(url_for('admin.dashboard'))
         else:
             flash("Invalid credentials, please try again.", "danger")
@@ -39,6 +39,7 @@ def login():
 def logout():
     session.pop('admin_logged_in', None)
     flash("You have been logged out.", "info")
+    write_secure_log("Admin", ADMIN_USERNAME, "logged out")
     return redirect(url_for('admin.login'))
 
 @admin_bp.route('/')
@@ -55,6 +56,7 @@ def dashboard():
 def approve_user(user_id):
     try:
         mongo.db.users.update_one({"_id": ObjectId(user_id)}, {"$set": {"status": "approved"}})
+        write_secure_log("Admin Approval", user_id, "User Approved")
         return jsonify({"success": True, "new_status": "approved"})
     except Exception as e:
         return jsonify({"success": False, "error": str(e)})
@@ -64,17 +66,16 @@ def approve_user(user_id):
 def reject_user(user_id):
     try:
         mongo.db.users.update_one({"_id": ObjectId(user_id)}, {"$set": {"status": "rejected"}})
+        write_secure_log("Admin Rejection", user_id, "User Rejected")
         return jsonify({"success": True, "new_status": "rejected"})
     except Exception as e:
         return jsonify({"success": False, "error": str(e)})
 
-# NEW: Admin-only route to view a document stored in GridFS
 @admin_bp.route('/document/<document_id>')
 @login_required
 def view_document(document_id):
     fs = GridFS(mongo.db)
     try:
-        # Retrieve the file from GridFS using its ObjectId
         grid_out = fs.get(ObjectId(document_id))
         return send_file(
             grid_out,
