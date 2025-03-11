@@ -15,7 +15,7 @@ from werkzeug.security import check_password_hash
 from extensions import mongo
 from bson import ObjectId
 from gridfs import GridFS
-
+from security.secure_logger import write_secure_log
 import re 
 auth_bp = Blueprint('auth', __name__)
 
@@ -79,6 +79,7 @@ def register():
 
         mongo.db.users.insert_one(user_data)
         flash('Registration successful. Please wait for admin approval.', 'success')
+        write_secure_log("User Registered", username, "Success")
         return redirect(url_for('auth.login'))
 
     return render_template('register.html')
@@ -94,8 +95,9 @@ def login():
 
         if not user_data:
             flash('Invalid username or password.')
+            write_secure_log("User Login", username, "Failed")
             return redirect(url_for('auth.login'))
-
+        write_secure_log("User Login", username, "Success")
         print(f"DEBUG: Found user {user_data['username']} - Stored Password: {user_data['password']}")  
         
         if not check_password_hash(user_data['password'], password):
