@@ -21,7 +21,15 @@
             <li>
                 <strong>From:</strong> {{ msg.sender_username }} |
                 <strong>To:</strong> {{ msg.recipient_username }}<br>
-                <strong>Message:</strong> {{ msg.message }}
+                <strong>Message:</strong> {{ msg.message }}<br>
+                
+                <!-- ✅ Display Message Hash for Blockchain Verification -->
+                <strong>Message Hash:</strong> {{ msg.hash }}<br>
+
+                <!-- ✅ Button to View Blockchain Integrity -->
+                <form action="{{ url_for('messaging.get_chain') }}" method="GET" target="_blank">
+                    <button type="submit">View Blockchain Integrity</button>
+                </form>
             </li>
             {% endfor %}
         </ul>
