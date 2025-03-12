@@ -7,6 +7,18 @@
         <p>To send or view messages, please <a href="{{ url_for('auth.login') }}">log in</a> or <a href="{{ url_for('auth.register') }}">register</a>.</p>
     {% else %}
         <h2>Direct Messaging</h2>
+        <!-- ✅ Link to Group Messaging -->
+        <p>
+            <a href="{{ url_for('group_messaging.group_messages') }}">
+                <button>Go to Group Messaging</button>
+            </a>
+        </p>
+        <!-- ✅ Link to Create Group Page -->
+        <p>
+            <a href="{{ url_for('group_messaging.create_group') }}">
+                <button>Create a New Group</button>
+            </a>
+        </p>
         <form method="POST">
             <label>Recipient Username:</label> 
             <input type="text" name="recipient" required><br>
