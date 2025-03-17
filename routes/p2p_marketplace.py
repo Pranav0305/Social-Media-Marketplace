@@ -10,12 +10,12 @@ def marketplace():
     if 'user_id' not in session:
         flash('Please log in first.')
         return redirect(url_for('auth.login'))
-
     return render_template("add_product.html")
 
 @p2p_marketplace_bp.route("/confirm_product", methods = ['GET', 'POST'])
 def add_product():
     if request.method == "POST":
+        user_id = session['user_id']
         data = request.json
         if not all(key in data for key in ["product_name", "product_seller_username", "product_price", "product_description"]):
             return jsonify({"message": "Missing fields"}), 400
@@ -24,7 +24,7 @@ def add_product():
         product = {
             "_id": product_id,
             "product_name": data["product_name"],
-            "product_seller_username": data["product_seller_username"],
+            "product_seller_username": user_id,
             "product_price": data["product_price"],
             "product_description": data["product_description"]
         }
