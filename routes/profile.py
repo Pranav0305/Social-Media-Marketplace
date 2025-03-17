@@ -4,7 +4,7 @@ from werkzeug.utils import secure_filename
 from bson import ObjectId
 from extensions import mongo
 
-profile_bp = Blueprint('profile_bp', __name__)  
+profile_bp = Blueprint('profile_bp', __name__)
 UPLOAD_FOLDER = 'static/uploads/'
 ALLOWED_EXTENSIONS = {'pdf', 'png', 'jpg', 'jpeg'}
 

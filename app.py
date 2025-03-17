@@ -6,6 +6,7 @@ from routes.admin import admin_bp
 from routes.profile import profile_bp
 from routes.messaging import messaging_bp
 from routes.home import home_bp
+from routes.p2p_marketplace import p2p_marketplace_bp
 from flask_login import UserMixin
 from werkzeug.middleware.proxy_fix import ProxyFix
 app = Flask(__name__)
@@ -42,6 +43,7 @@ app.register_blueprint(admin_bp, url_prefix='/admin')
 app.register_blueprint(profile_bp, url_prefix='/profile')
 app.register_blueprint(messaging_bp)
 app.register_blueprint(home_bp)
+app.register_blueprint(p2p_marketplace_bp)
 
 if __name__ == '__main__':
     app.run(ssl_context=('cert.pem', 'key.pem'), host='0.0.0.0', port=5000, debug=False)
