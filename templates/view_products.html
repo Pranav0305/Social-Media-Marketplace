@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>View Products</title>
+  <style>
+    /* Your existing CSS styles */
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 20px;
+    }
+    th, td {
+      border: 1px solid black;
+      padding: 10px;
+      text-align: left;
+    }
+    th {
+      background-color: #f2f2f2;
+    }
+    .buttons {
+      margin-top: 20px;
+    }
+    .buttons a, .buy-button {
+      text-decoration: none;
+      padding: 10px 20px;
+      background-color: #007bff;
+      color: white;
+      border-radius: 5px;
+      margin-right: 10px;
+    }
+    .buttons a:hover, .buy-button:hover {
+      background-color: #0056b3;
+    }
+  </style>
+</head>
+<body>
+  <h2>Available Products</h2>
+  <table>
+    <tr>
+      <th>Product ID</th>
+      <th>Name</th>
+      <th>Seller Username</th>
+      <th>Price</th>
+      <th>Description</th>
+      <th>Action</th>
+    </tr>
+    {% for product in products %}
+    <tr>
+      <td>{{ product._id }}</td>
+      <td>{{ product.product_name }}</td>
+      <td>{{ product.product_seller_username }}</td>
+      <td>${{ product.product_price }}</td>
+      <td>{{ product.product_description }}</td>
+      <td>
+        <!-- The Buy Now button directs the user to the dummy payment gateway -->
+        <a class="buy-button" href="{{ url_for('marketplace.buy_product', product_id=product._id) }}">Buy Now</a>
+      </td>
+    </tr>
+    {% endfor %}
+  </table>
+  <div class="buttons">
+    <a href="/">Go Back</a>
+    <a href="/add_product">Add Product</a>
+  </div>
+</body>
+</html>

@@ -1,0 +1,32 @@
+{% extends "layout.html" %}
+
+{% block title %}Admin Login{% endblock %}
+
+{% block content %}
+<h2>Admin Login</h2>
+
+<!-- Flash messages for incorrect login attempts -->
+{% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+        {% for category, message in messages %}
+            <p style="color: {% if category == 'danger' %}red{% else %}green{% endif %};">
+                {{ message }}
+            </p>
+        {% endfor %}
+    {% endif %}
+{% endwith %}
+
+<!-- Login Form -->
+<form method="POST" action="{{ url_for('admin.login') }}">
+    <label for="username">Username:</label>
+    <input type="text" id="username" name="username" required>
+    <br><br>
+    
+    <label for="password">Password:</label>
+    <input type="password" id="password" name="password" required>
+    <br><br>
+
+    <button type="submit">Login</button>
+</form>
+
+{% endblock %}

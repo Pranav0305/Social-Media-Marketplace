@@ -1,0 +1,78 @@
+{% extends "layout.html" %}
+{% block title %}Register{% endblock %}
+
+{% block content %}
+<h2>Register</h2>
+
+<!-- Flash Messages -->
+{% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+        {% for category, message in messages %}
+            <p style="color: {% if category == 'danger' %}red{% else %}green{% endif %};">
+                {{ message }}
+            </p>
+        {% endfor %}
+    {% endif %}
+{% endwith %}
+
+<form method="POST" enctype="multipart/form-data" onsubmit="return validatePassword()">
+    <label for="username">Username:</label>
+    <input type="text" id="username" name="username" required><br><br>
+
+    <label for="email">Email:</label>
+    <input type="email" id="email" name="email" required><br><br>
+
+    <label for="password">Password:</label>
+    <input type="password" id="password" name="password" onkeyup="checkPasswordStrength()" required><br>
+
+    <!-- Password Strength Rules -->
+    <div id="password-rules">
+        <p>Password must contain:</p>
+        <ul>
+            <li id="length-rule" style="color:red;">✅ At least 8 characters</li>
+            <li id="uppercase-rule" style="color:red;">✅ One uppercase letter (A-Z)</li>
+            <li id="lowercase-rule" style="color:red;">✅ One lowercase letter (a-z)</li>
+            <li id="number-rule" style="color:red;">✅ One number (0-9)</li>
+            <li id="special-rule" style="color:red;">✅ One special character (!@#$%^&*)</li>
+        </ul>
+    </div>
+    <br>
+
+    <label for="document">Upload Verification Document:</label>
+    <input type="file" id="document" name="document" accept=".png, .jpg, .jpeg, .pdf" required><br><br>
+
+    <button type="submit">Register</button>
+</form>
+
+<!-- Footer Link -->
+<p>Already have an account? <a href="{{ url_for('auth.login') }}">Login here</a></p>
+
+<script>
+function checkPasswordStrength() {
+    let password = document.getElementById("password").value;
+    
+    document.getElementById("length-rule").style.color = password.length >= 8 ? "green" : "red";
+    document.getElementById("uppercase-rule").style.color = /[A-Z]/.test(password) ? "green" : "red";
+    document.getElementById("lowercase-rule").style.color = /[a-z]/.test(password) ? "green" : "red";
+    document.getElementById("number-rule").style.color = /\d/.test(password) ? "green" : "red";
+    document.getElementById("special-rule").style.color = /[!@#$%^&*(),.?":{}|<>]/.test(password) ? "green" : "red";
+}
+
+function validatePassword() {
+    let password = document.getElementById("password").value;
+
+    let lengthValid = password.length >= 8;
+    let uppercaseValid = /[A-Z]/.test(password);
+    let lowercaseValid = /[a-z]/.test(password);
+    let numberValid = /\d/.test(password);
+    let specialValid = /[!@#$%^&*(),.?":{}|<>]/.test(password);
+
+    if (!lengthValid || !uppercaseValid || !lowercaseValid || !numberValid || !specialValid) {
+        alert("Your password does not meet the security requirements.");
+        return false;  // Prevent form submission
+    }
+    return true;  // Allow form submission
+}
+</script>
+
+{% endblock %}

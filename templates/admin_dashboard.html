@@ -1,0 +1,89 @@
+{% extends "layout.html" %}
+{% block title %}Admin Dashboard{% endblock %}
+
+{% block content %}
+<h2>Admin Dashboard</h2>
+
+{% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+        {% for category, message in messages %}
+            <p style="color: {% if category == 'danger' %}red{% else %}green{% endif %};">
+                {{ message }}
+            </p>
+        {% endfor %}
+    {% endif %}
+{% endwith %}
+
+<a href="{{ url_for('admin.logout') }}" style="float: right; background-color: red; color: white; padding: 5px 10px; text-decoration: none;">Logout</a>
+
+<table border="1" cellpadding="5">
+    <tr>
+        <th>Email</th>
+        <th>Username</th>
+        <th>Document</th>
+        <th>Status</th>
+        <th>Action</th>
+    </tr>
+    {% for user in users %}
+    <tr id="user-row-{{ user._id }}">
+        <td>{{ user.email }}</td>
+        <td>{{ user.username }}</td>
+        <td>
+            {% if user.document and user.document != "" %}
+                <!-- Updated link to use the admin route that retrieves the GridFS file -->
+                <a href="{{ url_for('admin.view_document', document_id=user.document) }}" target="_blank">View Document</a>
+            {% else %}
+                <span style="color: red;">No Document</span>
+            {% endif %}
+        </td>
+        <td id="status-{{ user._id }}">{{ user.status }}</td>
+        <td id="action-{{ user._id }}">
+            {% if user.status == 'pending' %}
+                <button class="approve-btn" data-url="{{ url_for('admin.approve_user', user_id=user._id) }}" data-userid="{{ user._id }}">Approve</button>
+                <button class="reject-btn" data-url="{{ url_for('admin.reject_user', user_id=user._id) }}" data-userid="{{ user._id }}" style="background-color: red; color: white;">Reject</button>
+            {% else %}
+                <strong>{{ user.status | capitalize }}</strong>
+            {% endif %}
+        </td>
+    </tr>
+    {% endfor %}
+</table>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        document.querySelectorAll(".approve-btn, .reject-btn").forEach(button => {
+            button.addEventListener("click", function () {
+                const userId = this.getAttribute("data-userid");
+                const actionUrl = this.getAttribute("data-url");
+                const rowId = `user-row-${userId}`;
+                const statusCell = document.querySelector(`#${rowId} td[id^='status-']`);
+                const actionCell = document.querySelector(`#${rowId} td[id^='action-']`);
+
+                // Disable buttons to prevent multiple clicks
+                this.disabled = true;
+
+                fetch(actionUrl, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        statusCell.textContent = data.new_status;
+                        actionCell.innerHTML = `<strong>${data.new_status.charAt(0).toUpperCase() + data.new_status.slice(1)}</strong>`;
+                    } else {
+                        alert("Error: " + data.error);
+                        this.disabled = false; 
+                    }
+                })
+                .catch(error => {
+                    console.error("Error:", error);
+                    alert("An unexpected error occurred.");
+                    this.disabled = false; 
+                });
+            });
+        });
+    });
+</script>
+
+{% endblock %}

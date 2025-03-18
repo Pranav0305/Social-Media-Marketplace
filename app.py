@@ -1,56 +1,50 @@
-from flask import Flask, request, render_template, jsonify
-from pymongo import MongoClient
-from backend import models
-
+from flask import Flask,  send_from_directory
+from config import Config
+from extensions import mongo, login_manager  
+from routes.auth import auth_bp
+from routes.admin import admin_bp
+from routes.profile import profile_bp
+from routes.messaging import messaging_bp
+from routes.home import home_bp
+from routes.p2p_marketplace import p2p_marketplace_bp
+from flask_login import UserMixin
+from werkzeug.middleware.proxy_fix import ProxyFix
 app = Flask(__name__)
-mongo = MongoClient("mongodb+srv://pranav22363:m6UrGZqKnMlcpARb@cluster0.5uvzn.mongodb.net/")
-db = mongo["App"]  
+app.wsgi_app = ProxyFix(app.wsgi_app, x_proto=1, x_host=1)
 
-@app.route('/', methods = ['GET', 'POST'])
-def loginPage():
-    userAccounts = db['UserAccounts']
-    
-    if request.method == 'POST':
-        uName = request.form.get("username")
-        pwd = request.form.get("pwd")
-        if uName and pwd:
-            currUser = userAccounts.find({"username" : uName, "password" : pwd})
-            try:
-                currUserEntry = next(currUser, None)
-                print(currUserEntry)
-            except:
-                print(currUser)
-    return render_template("loginPage.html")
+app.config.from_object(Config)
+app.secret_key = "your_secret_key" 
+from routes.group_messaging import group_messaging_bp
+app.register_blueprint(group_messaging_bp)
 
-@app.route('/registerUser', methods = ['GET', 'POST'])
-def registerUser():
-    userAccounts = db["UserAccounts"]
-    
-    if request.method == 'POST':
-        uName = request.form.get("username")
-        pwd = request.form.get("pwd")
-        
-        if uName and pwd:
-            newUser = models.User(username = uName, password = pwd)
-            try:
-                userAccounts.insert_one({"username" : newUser.username, "password" : newUser.password})
-                return "User Added"
-            except:
-                return "User already exists"
-            
-    return render_template("registerUserPage.html")
+mongo.init_app(app)
+UPLOAD_FOLDER = 'static/uploads/'
 
+@app.route('/uploads/<filename>')  
+def uploaded_file(filename):
+    return send_from_directory(UPLOAD_FOLDER, filename)
 
-@app.route('/users', methods=['GET'])
-def get_registered_users():
-    userAccounts = db["UserAccounts"]
-    
-    try:
-        users = userAccounts.find({}, {"_id": 0, "username": 1})  
-        return jsonify(list(users))
+login_manager.init_app(app)  
+login_manager.login_view = "auth.login"  
 
-    except Exception as e:
-        return jsonify({"error": str(e)})
-  
-if __name__ == "__main__":
-    app.run(host = '0.0.0.0')
+class User(UserMixin):
+    def __init__(self, user_data):
+        self.id = str(user_data["_id"])
+        self.username = user_data["username"]
+        self.email = user_data["email"]
+
+@login_manager.user_loader
+def load_user(user_id):
+    user_data = mongo.db.users.find_one({"_id": ObjectId(user_id)})
+    return User(user_data) if user_data else None
+
+app.register_blueprint(auth_bp)
+app.register_blueprint(admin_bp, url_prefix='/admin')
+app.register_blueprint(profile_bp, url_prefix='/profile')
+app.register_blueprint(messaging_bp)
+app.register_blueprint(home_bp)
+app.register_blueprint(p2p_marketplace_bp)
+
+if __name__ == '__main__':
+    app.run(ssl_context=('cert.pem', 'key.pem'), host='0.0.0.0', port=5000, debug=False)
+

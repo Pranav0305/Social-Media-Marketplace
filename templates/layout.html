@@ -1,0 +1,41 @@
+<!doctype html>
+<html>
+<head>
+    <title>{% block title %}Social Media Platform{% endblock %}</title>
+</head>
+<body>
+    <nav>
+        <a href="{{ url_for('auth.login') }}">Login</a> |
+        <a href="{{ url_for('auth.register') }}">Register</a> |
+        <a href="{{ url_for('profile_bp.profile') }}">Profile</a> |
+        <a href="{{ url_for('messaging.messages') }}">Messages</a> |
+        <a href = "{{url_for('marketplace.view_products')}}"> Marketplace </a>
+        {% if session.get('user_id') %}
+         | <a href="{{ url_for('auth.logout') }}">Logout</a>
+        {% endif %}
+    </nav>
+    <hr>
+
+    <!-- Flash Messages -->
+    <div>
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                <ul>
+                    {% for category, message in messages %}
+                        <li style="color: 
+                            {% if category == 'danger' %}red
+                            {% elif category == 'success' %}green
+                            {% else %}black{% endif %};">
+                            {{ message }}
+                        </li>
+                    {% endfor %}
+                </ul>
+            {% endif %}
+        {% endwith %}
+    </div>
+
+    <div>
+        {% block content %}{% endblock %}
+    </div>
+</body>
+</html>

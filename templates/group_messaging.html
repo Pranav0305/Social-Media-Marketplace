@@ -1,0 +1,49 @@
+{% extends "layout.html" %}
+{% block title %}Group Messaging{% endblock %}
+
+{% block content %}
+    {% if not session.get('user_id') %}
+        <h2>You need to log in first.</h2>
+        <p>To send or view messages, please <a href="{{ url_for('auth.login') }}">log in</a> or <a href="{{ url_for('auth.register') }}">register</a>.</p>
+    {% else %}
+        <h2>Group Messaging</h2>
+
+        <!-- ✅ Show available groups -->
+        <h3>Your Groups</h3>
+        {% if groups %}
+            <form method="POST">
+                <label>Select Group:</label> 
+                <select name="group_name" required>
+                    <option value="" disabled selected>-- Select a Group --</option>
+                    {% for group in groups %}
+                        <option value="{{ group['name'] }}">{{ group['name'] }}</option>
+                    {% endfor %}
+                </select>                
+                <label>Message:</label> 
+                <textarea name="message" required></textarea><br>
+                <input type="submit" value="Send Message">
+            </form>
+        {% else %}
+            <p>You are not a member of any groups. <a href="{{ url_for('group_messaging.create_group') }}">Create a group</a></p>
+        {% endif %}
+
+        <h3>Group Messages</h3>
+        <ul>
+            {% for msg in messages %}
+            <li>
+                <strong>From:</strong> {{ msg.sender_username }} |
+                <strong>Group:</strong> {{ msg.group_name }}<br>
+                <strong>Message:</strong> {{ msg.message }}<br>
+                
+                <!-- ✅ Display Message Hash for Blockchain Verification -->
+                <strong>Message Hash:</strong> {{ msg.hash }}<br>
+
+                <!-- ✅ Button to View Group Blockchain Integrity -->
+                <form action="{{ url_for('group_messaging.group_chain') }}" method="GET" target="_blank">
+                    <button type="submit">View Blockchain Integrity</button>
+                </form>
+            </li>
+            {% endfor %}
+        </ul>
+    {% endif %}
+{% endblock %}

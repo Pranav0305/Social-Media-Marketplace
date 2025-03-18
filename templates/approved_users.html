@@ -1,0 +1,11 @@
+{% extends "layout.html" %}
+
+{% block content %}
+<h2>Approved Users</h2>
+<ul>
+    {% for user in users %}
+    <li>{{ user.name }} - {{ user.email }}</li>
+    {% endfor %}
+</ul>
+{% endblock %}
+
