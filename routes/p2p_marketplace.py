@@ -53,3 +53,14 @@ def view_products():
         product["_id"] = str(product["_id"])
 
     return render_template("view_products.html", products=products)
+
+@p2p_marketplace_bp.route("/buy/<product_id>")
+def buy_product(product_id):
+    if 'user_id' not in session:
+        flash('Please log in first.')
+        return redirect(url_for('auth.login'))
+    
+    product = mongo.db.Products.find_one({"_id": product_id})
+    if not product:
+        return "Product not found", 404
+    return render_template("payment_gateway.html", product=product)
