@@ -44,15 +44,47 @@ def add_product():
     mongo.db.Products.insert_one(product)
     return jsonify({"message": "Product added successfully!", "product_id": product_id})
 
+# @p2p_marketplace_bp.route("/view_products")
+# def view_products():
+#     products = list(mongo.db.Products.find({}))  # Fetch all products from MongoDB
+
+#     # Convert ObjectId to string for JSON serialization
+#     for product in products:
+#         product["_id"] = str(product["_id"])
+
+#     return render_template("view_products.html", products=products)
+
 @p2p_marketplace_bp.route("/view_products")
 def view_products():
-    products = list(mongo.db.Products.find({}))  # Fetch all products from MongoDB
+    # If 'user_id' not in session, optionally enforce login
+    # if 'user_id' not in session:
+    #     flash('Please log in first.')
+    #     return redirect(url_for('auth.login'))
 
-    # Convert ObjectId to string for JSON serialization
+    search_query = request.args.get('search', '').strip()
+
+    if search_query:
+        # Use case-insensitive regex to search product_name OR product_description
+        query = {
+            "$or": [
+                {"product_name": {"$regex": search_query, "$options": "i"}},
+                {"product_description": {"$regex": search_query, "$options": "i"}}
+            ]
+        }
+        products_cursor = mongo.db.Products.find(query)
+    else:
+        # No search term -> retrieve all products
+        products_cursor = mongo.db.Products.find({})
+
+    products = list(products_cursor)
+
+    # Convert ObjectIds to strings for each product
     for product in products:
-        product["_id"] = str(product["_id"])
+        if isinstance(product["_id"], ObjectId):
+            product["_id"] = str(product["_id"])
 
-    return render_template("view_products.html", products=products)
+    return render_template("view_products.html", products=products, search_query=search_query)
+
 
 @p2p_marketplace_bp.route("/buy/<product_id>")
 def buy_product(product_id):

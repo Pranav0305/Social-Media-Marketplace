@@ -2,70 +2,151 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>View Products</title>
   <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #f3f3f3;
+      margin: 0;
+      padding: 0;
+      color: #333;
+    }
+    header {
+      background-color: #2c3e50;
+      color: #fff;
+      padding: 15px 20px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    header h1 {
+      margin: 0;
+      font-size: 1.5em;
+    }
+    nav a {
+      color: #fff;
+      text-decoration: none;
+      margin-right: 15px;
+    }
+    .search-form {
+      display: flex;
+      align-items: center;
+    }
+    .search-form input[type="text"] {
+      padding: 5px;
+      font-size: 1em;
+      border: 1px solid #ccc;
+      border-radius: 3px;
+      margin-right: 5px;
+    }
+    .search-form input[type="submit"] {
+      padding: 5px 10px;
+      background-color: #27ae60;
+      border: none;
+      color: #fff;
+      border-radius: 3px;
+      cursor: pointer;
+    }
+    .container {
+      max-width: 960px;
+      margin: 20px auto;
+      background-color: #fff;
+      padding: 20px;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    }
     table {
       width: 100%;
       border-collapse: collapse;
       margin-top: 20px;
     }
-    th, td {
-      border: 1px solid black;
+    table th, table td {
+      border: 1px solid #ddd;
       padding: 10px;
       text-align: left;
     }
-    th {
-      background-color: #f2f2f2;
+    table th {
+      background-color: #ecf0f1;
     }
-    th.action-col, td.action-col {
-      width: 130px; 
+    .action-col {
+      width: 120px;
+      text-align: center;
+    }
+    .buy-button {
+      background-color: #27ae60;
+      color: #fff;
+      padding: 5px 10px;
+      text-decoration: none;
+      border-radius: 3px;
+      font-size: 0.9em;
+    }
+    .buy-button:hover {
+      background-color: #1e8449;
     }
     .buttons {
       margin-top: 20px;
     }
-    .buttons a, .buy-button {
+    .buttons a {
       text-decoration: none;
-      padding: 10px 20px;
-      background-color: #007bff;
-      color: white;
-      border-radius: 5px;
+      padding: 10px 15px;
+      background-color: #2980b9;
+      color: #fff;
+      border-radius: 3px;
       margin-right: 10px;
       display: inline-block;
-      white-space: nowrap;
     }
-    .buttons a:hover, .buy-button:hover {
-      background-color: #0056b3;
+    .buttons a:hover {
+      background-color: #1c5980;
     }
   </style>
 </head>
 <body>
-  <h2>Available Products</h2>
-  <table>
-    <tr>
-      <th>Product ID</th>
-      <th>Name</th>
-      <th>Seller Username</th>
-      <th>Price</th>
-      <th>Description</th>
-      <th class="action-col">Action</th>
-    </tr>
-    {% for product in products %}
-    <tr>
-      <td>{{ product._id }}</td>
-      <td>{{ product.product_name }}</td>
-      <td>{{ product.product_seller_username }}</td>
-      <td>${{ product.product_price }}</td>
-      <td>{{ product.product_description }}</td>
-      <td class="action-col">
-        <a class="buy-button" href="{{ url_for('marketplace.buy_product', product_id=product._id) }}">Buy Now</a>
-      </td>
-    </tr>
-    {% endfor %}
-  </table>
-  <div class="buttons">
-    <a href="/">Go Back</a>
-    <a href="/add_product">Add Product</a>
+  <header>
+    <h1>Marketplace</h1>
+    <div>
+      <nav>
+        <a href="/">Home</a>
+        <a href="/add_product">Add Product</a>
+      </nav>
+      <form class="search-form" method="GET" action="{{ url_for('marketplace.view_products') }}">
+        <input type="text" name="search" placeholder="Search products..."
+               value="{{ search_query if search_query else '' }}">
+        <input type="submit" value="Search">
+      </form>
+    </div>
+  </header>
+
+  <div class="container">
+    <h2>Available Products</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>Product ID</th>
+          <th>Name</th>
+          <th>Seller Username</th>
+          <th>Price</th>
+          <th>Description</th>
+          <th class="action-col">Action</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for product in products %}
+        <tr>
+          <td>{{ product._id }}</td>
+          <td>{{ product.product_name }}</td>
+          <td>{{ product.product_seller_username }}</td>
+          <td>${{ product.product_price }}</td>
+          <td>{{ product.product_description }}</td>
+          <td class="action-col">
+            <a class="buy-button" href="{{ url_for('marketplace.buy_product', product_id=product._id) }}">Buy Now</a>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    <div class="buttons">
+      <a href="/">Go Back</a>
+    </div>
   </div>
 </body>
 </html>
