@@ -1,40 +1,97 @@
 <!doctype html>
 <html>
 <head>
+    <meta charset="utf-8">
     <title>{% block title %}Social Media Platform{% endblock %}</title>
+    <style>
+        /* Base styles */
+        body {
+            font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+            background: #f8f9fa;
+            color: #333;
+            margin: 0;
+            padding: 0;
+        }
+        /* Navigation styling */
+        nav {
+            background: #343a40;
+            padding: 1rem;
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+        nav a {
+            color: #ffffff;
+            text-decoration: none;
+            margin-right: 15px;
+            font-weight: 500;
+        }
+        nav a:hover {
+            text-decoration: underline;
+        }
+        /* Divider */
+        hr {
+            border: none;
+            border-top: 1px solid #e0e0e0;
+            margin: 0;
+        }
+        /* Container for page content */
+        .container {
+            padding: 1rem;
+        }
+        /* Flash messages styling */
+        .flash-messages ul {
+            list-style: none;
+            padding: 0;
+            margin: 0.5rem 0;
+        }
+        .flash-messages li {
+            margin-bottom: 0.5rem;
+            padding: 0.5rem;
+            border-radius: 4px;
+        }
+        .flash-messages li.danger {
+            background-color: #f8d7da;
+            color: #721c24;
+        }
+        .flash-messages li.success {
+            background-color: #d4edda;
+            color: #155724;
+        }
+        .flash-messages li.info {
+            background-color: #d1ecf1;
+            color: #0c5460;
+        }
+    </style>
 </head>
 <body>
     <nav>
-        <a href="{{ url_for('auth.login') }}">Login</a> |
-        <a href="{{ url_for('auth.register') }}">Register</a> |
-        <a href="{{ url_for('profile_bp.profile') }}">Profile</a> |
-        <a href="{{ url_for('messaging.messages') }}">Messages</a> |
-        <a href = "{{url_for('marketplace.view_products')}}"> Marketplace </a>
+        <a href="{{ url_for('auth.login') }}">Login</a>
+        <a href="{{ url_for('auth.register') }}">Register</a>
+        <a href="{{ url_for('profile_bp.profile') }}">Profile</a>
+        <a href="{{ url_for('messaging.messages') }}">Messages</a>
+        <a href="{{ url_for('marketplace.view_products') }}">Marketplace</a>
         {% if session.get('user_id') %}
-         | <a href="{{ url_for('auth.logout') }}">Logout</a>
+            <a href="{{ url_for('auth.logout') }}">Logout</a>
         {% endif %}
     </nav>
     <hr>
+    <div class="container">
+        <!-- Flash Messages -->
+        <div class="flash-messages">
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    <ul>
+                        {% for category, message in messages %}
+                            <li class="{{ category }}">
+                                {{ message }}
+                            </li>
+                        {% endfor %}
+                    </ul>
+                {% endif %}
+            {% endwith %}
+        </div>
 
-    <!-- Flash Messages -->
-    <div>
-        {% with messages = get_flashed_messages(with_categories=true) %}
-            {% if messages %}
-                <ul>
-                    {% for category, message in messages %}
-                        <li style="color: 
-                            {% if category == 'danger' %}red
-                            {% elif category == 'success' %}green
-                            {% else %}black{% endif %};">
-                            {{ message }}
-                        </li>
-                    {% endfor %}
-                </ul>
-            {% endif %}
-        {% endwith %}
-    </div>
-
-    <div>
         {% block content %}{% endblock %}
     </div>
 </body>
