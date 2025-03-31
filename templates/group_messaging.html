@@ -8,19 +8,22 @@
     {% else %}
         <h2>Group Messaging</h2>
 
-        <!-- ✅ Show available groups -->
+        <!-- Show available groups -->
         <h3>Your Groups</h3>
         {% if groups %}
-            <form method="POST">
+            <!-- Note the enctype attribute for file uploads -->
+            <form method="POST" enctype="multipart/form-data">
                 <label>Select Group:</label> 
                 <select name="group_name" required>
                     <option value="" disabled selected>-- Select a Group --</option>
                     {% for group in groups %}
                         <option value="{{ group['name'] }}">{{ group['name'] }}</option>
                     {% endfor %}
-                </select>                
+                </select><br>
                 <label>Message:</label> 
                 <textarea name="message" required></textarea><br>
+                <label>Media File (optional):</label>
+                <input type="file" name="media"><br>
                 <input type="submit" value="Send Message">
             </form>
         {% else %}
@@ -34,11 +37,18 @@
                 <strong>From:</strong> {{ msg.sender_username }} |
                 <strong>Group:</strong> {{ msg.group_name }}<br>
                 <strong>Message:</strong> {{ msg.message }}<br>
-                
-                <!-- ✅ Display Message Hash for Blockchain Verification -->
+                <!-- Display Message Hash for Blockchain Verification -->
                 <strong>Message Hash:</strong> {{ msg.hash }}<br>
-
-                <!-- ✅ Button to View Group Blockchain Integrity -->
+                {% if msg.media_file %}
+                    <strong>Media:</strong>
+                    {% if msg.media_type and 'image' in msg.media_type %}
+                        <img src="{{ url_for('admin.view_document', document_id=msg.media_file) }}" alt="Media" width="200">
+                    {% else %}
+                        <a href="{{ url_for('admin.view_document', document_id=msg.media_file) }}" target="_blank">View File</a>
+                    {% endif %}
+                    <br>
+                {% endif %}
+                <!-- Button to View Group Blockchain Integrity -->
                 <form action="{{ url_for('group_messaging.group_chain') }}" method="GET" target="_blank">
                     <button type="submit">View Blockchain Integrity</button>
                 </form>
