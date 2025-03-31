@@ -1,22 +1,12 @@
 from flask import Blueprint, render_template, request, redirect, url_for, flash, session
 from werkzeug.security import generate_password_hash, check_password_hash
+from werkzeug.utils import secure_filename
 from extensions import mongo
 import re
-auth_bp = Blueprint('auth', __name__)
-import os
-from flask import Blueprint, render_template, request, redirect, url_for, flash
-from werkzeug.security import generate_password_hash
-from werkzeug.utils import secure_filename
-from bson import ObjectId
-from extensions import mongo
-from flask import Blueprint, render_template, request, redirect, url_for, flash, session
-from flask_login import login_user, logout_user, UserMixin
-from werkzeug.security import check_password_hash
-from extensions import mongo
 from bson import ObjectId
 from gridfs import GridFS
 from security.secure_logger import write_secure_log
-import re 
+
 auth_bp = Blueprint('auth', __name__)
 
 ALLOWED_EXTENSIONS = {'pdf', 'png', 'jpg', 'jpeg'}
@@ -72,7 +62,7 @@ def register():
             'email': email,
             'username': username,
             'password': hashed_password,
-            'status': 'pending',  # Admin approval required
+            'status': 'pending',  # Admin approval required for certain functionalities
             'profile': {'profile_picture': '', 'bio': ''},
             'document': str(document_id) if document_id else ''  # Save the GridFS file ID as string
         }
@@ -104,12 +94,10 @@ def login():
             flash('Invalid username or password.')
             return redirect(url_for('auth.login'))
 
-        if user_data['status'] != 'approved':
-            flash('Your account is not approved yet.')
-            return redirect(url_for('auth.login'))
-
+        # Allow login regardless of approval status, but store the status in the session.
         session['user_id'] = str(user_data["_id"])
         session['username'] = user_data["username"]
+        session['status'] = user_data.get("status", "pending")  # e.g., 'approved' or 'pending'
 
         flash('Login successful!')
         return redirect(url_for('profile_bp.profile')) 
