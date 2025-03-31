@@ -7,23 +7,26 @@
         <p>To send or view messages, please <a href="{{ url_for('auth.login') }}">log in</a> or <a href="{{ url_for('auth.register') }}">register</a>.</p>
     {% else %}
         <h2>Direct Messaging</h2>
-        <!-- ✅ Link to Group Messaging -->
+        <!-- Link to Group Messaging -->
         <p>
             <a href="{{ url_for('group_messaging.group_messages') }}">
                 <button>Go to Group Messaging</button>
             </a>
         </p>
-        <!-- ✅ Link to Create Group Page -->
+        <!-- Link to Create Group Page -->
         <p>
             <a href="{{ url_for('group_messaging.create_group') }}">
                 <button>Create a New Group</button>
             </a>
         </p>
-        <form method="POST">
+        <!-- Note the enctype attribute for file uploads -->
+        <form method="POST" enctype="multipart/form-data">
             <label>Recipient Username:</label> 
             <input type="text" name="recipient" required><br>
             <label>Message:</label> 
             <textarea name="message" required></textarea><br>
+            <label>Media File (optional):</label>
+            <input type="file" name="media"><br>
             <input type="submit" value="Send Message">
         </form>
 
@@ -34,11 +37,18 @@
                 <strong>From:</strong> {{ msg.sender_username }} |
                 <strong>To:</strong> {{ msg.recipient_username }}<br>
                 <strong>Message:</strong> {{ msg.message }}<br>
-                
-                <!-- ✅ Display Message Hash for Blockchain Verification -->
+                <!-- Display Message Hash for Blockchain Verification -->
                 <strong>Message Hash:</strong> {{ msg.hash }}<br>
-
-                <!-- ✅ Button to View Blockchain Integrity -->
+                {% if msg.media_file %}
+                    <strong>Media:</strong>
+                    {% if msg.media_type and 'image' in msg.media_type %}
+                        <img src="{{ url_for('admin.view_document', document_id=msg.media_file) }}" alt="Media" width="200">
+                    {% else %}
+                        <a href="{{ url_for('admin.view_document', document_id=msg.media_file) }}" target="_blank">View File</a>
+                    {% endif %}
+                    <br>
+                {% endif %}
+                <!-- Button to View Blockchain Integrity -->
                 <form action="{{ url_for('messaging.get_chain') }}" method="GET" target="_blank">
                     <button type="submit">View Blockchain Integrity</button>
                 </form>
