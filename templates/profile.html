@@ -6,7 +6,12 @@
         <h2>You need to log in first.</h2>
         <p><a href="{{ url_for('auth.login') }}">Login here</a> or <a href="{{ url_for('auth.register') }}">Register</a></p>
     {% else %}
-        <h2>Welcome, {{ user.username }}!</h2>
+        {% if is_own_profile %}
+            <h2>Welcome, {{ user.username }}!</h2>
+        {% else %}
+            <h2>{{ user.username }}'s Profile</h2>
+        {% endif %}
+
         <p>Email: {{ user.email }}</p>
         <p>Status: <strong>{{ user.status }}</strong></p>
 
@@ -22,24 +27,101 @@
         <!-- Bio -->
         <p><strong>Bio:</strong> {{ user.profile.bio or "No bio available." }}</p>
 
-        <!-- Update Profile Form -->
-        <h3>Edit Profile</h3>
-        <form method="POST" enctype="multipart/form-data">
-            <label for="bio">Bio:</label>
-            <textarea id="bio" name="bio">{{ user.profile.bio }}</textarea><br><br>
+        {% if is_own_profile %}
+            <!-- Friend Requests -->
+            {% if friend_requests %}
+                <h3>Friend Requests</h3>
+                <ul>
+                {% for req in friend_requests %}
+                    <li>
+                        {{ req.sender_username }}
+                        <form method="POST" action="{{ url_for('profile_bp.accept_friend_request', request_id=req.request_id) }}" style="display:inline;">
+                            <button type="submit">Accept</button>
+                        </form>
+                        <form method="POST" action="{{ url_for('profile_bp.reject_friend_request', request_id=req.request_id) }}" style="display:inline;">
+                            <button type="submit">Reject</button>
+                        </form>
+                    </li>
+                {% endfor %}
+                </ul>
+            {% else %}
+                <p>No new friend requests.</p>
+            {% endif %}
 
-            <label for="profile_picture">Upload Profile Picture:</label>
-            <input type="file" id="profile_picture" name="profile_picture" accept=".png, .jpg, .jpeg"><br><br>
+            <!-- Friends List -->
+            <h3>Your Friends</h3>
+            {% if friends|length > 0 %}
+                <ul>
+                {% for friend in friends %}
+                    <li>
+                        <a href="{{ url_for('profile_bp.profile_view', user_id=friend._id) }}">
+                            {{ friend.username }}
+                        </a>
+                    </li>
+                {% endfor %}
+                </ul>
+            {% else %}
+                <p>You don’t have any friends yet.</p>
+            {% endif %}
 
-            <button type="submit">Update Profile</button>
-        </form>
+            <!-- Edit Profile Form -->
+            <h3>Edit Profile</h3>
+            <form method="POST" enctype="multipart/form-data">
+                <label for="bio">Bio:</label>
+                <textarea id="bio" name="bio">{{ user.profile.bio }}</textarea><br><br>
 
-        <!-- Document Upload -->
-        <h3>Uploaded Document</h3>
-        {% if user.document %}
-            <p><a href="{{ url_for('uploaded_file', filename=user.document) }}" target="_blank">View Document</a></p>
+                <label for="profile_picture">Upload Profile Picture:</label>
+                <input type="file" id="profile_picture" name="profile_picture" accept=".png, .jpg, .jpeg"><br><br>
+
+                <button type="submit">Update Profile</button>
+            </form>
+
+            <!-- Document Upload -->
+            <h3>Uploaded Document</h3>
+            {% if user.document %}
+                <p><a href="{{ url_for('uploaded_file', filename=user.document) }}" target="_blank">View Document</a></p>
+            {% else %}
+                <p>No document uploaded.</p>
+            {% endif %}
+
         {% else %}
-            <p>No document uploaded.</p>
+            <!-- Friends List of Another User -->
+            <h3>{{ user.username }}'s Friends</h3>
+            {% if friends|length > 0 %}
+                <ul>
+                {% for friend in friends %}
+                    <li>
+                        <a href="{{ url_for('profile_bp.profile_view', user_id=friend._id) }}">
+                            {{ friend.username }}
+                        </a>
+                    </li>
+                {% endfor %}
+                </ul>
+            {% else %}
+                <p>No friends to display.</p>
+            {% endif %}
+
+            <!-- Social Features -->
+            <h3>Social Actions</h3>
+
+            <!-- Friend Request -->
+            <form method="POST" action="{{ url_for('profile_bp.send_friend_request', user_id=user._id) }}">
+                <button type="submit">Send Friend Request</button>
+            </form>
+            <br>
+
+            <!-- Block User -->
+            <form method="POST" action="{{ url_for('profile_bp.block_user', user_id=user._id) }}">
+                <button type="submit" onclick="return confirm('Are you sure you want to block this user?')">Block User</button>
+            </form>
+            <br>
+
+            <!-- Report User -->
+            <form method="POST" action="{{ url_for('profile_bp.report_user', user_id=user._id) }}">
+                <label for="reason">Report Reason:</label><br>
+                <textarea name="reason" rows="3" cols="40" placeholder="Enter reason..."></textarea><br>
+                <button type="submit">Report User</button>
+            </form>
         {% endif %}
     {% endif %}
 {% endblock %}
