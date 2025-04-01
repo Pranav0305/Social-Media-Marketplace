@@ -9,8 +9,12 @@ from routes.home import home_bp
 from routes.p2p_marketplace import p2p_marketplace_bp
 from flask_login import UserMixin
 from werkzeug.middleware.proxy_fix import ProxyFix
+from routes import profile, search  
+
 app = Flask(__name__)
 app.wsgi_app = ProxyFix(app.wsgi_app, x_proto=1, x_host=1)
+
+app.register_blueprint(search.search_bp)
 
 app.config.from_object(Config)
 app.secret_key = "your_secret_key" 
