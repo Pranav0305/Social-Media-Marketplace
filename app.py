@@ -17,7 +17,24 @@ app.wsgi_app = ProxyFix(app.wsgi_app, x_proto=1, x_host=1)
 app.register_blueprint(search.search_bp)
 
 app.config.from_object(Config)
+# Configure secure session cookies
+app.config.update(
+    SESSION_COOKIE_SECURE=True,    # Cookie is only sent over HTTPS
+    SESSION_COOKIE_HTTPONLY=True,  # Cookie is not accessible via JavaScript
+    SESSION_COOKIE_SAMESITE='Lax'  # Helps mitigate CSRF attacks
+)
+
 app.secret_key = "your_secret_key" 
+
+# Set cache control headers after every request
+@app.after_request
+def set_cache_headers(response):
+    if 'Cache-Control' not in response.headers:
+        response.headers['Cache-Control'] = 'no-store, no-cache, must-revalidate, max-age=0'
+        response.headers['Pragma'] = 'no-cache'
+        response.headers['Expires'] = '-1'
+    return response
+
 from routes.group_messaging import group_messaging_bp
 app.register_blueprint(group_messaging_bp)
 
