@@ -10,6 +10,7 @@ from routes.p2p_marketplace import p2p_marketplace_bp
 from flask_login import UserMixin
 from werkzeug.middleware.proxy_fix import ProxyFix
 from routes import profile, search  
+from bson.objectid import ObjectId  # new
 
 app = Flask(__name__)
 app.wsgi_app = ProxyFix(app.wsgi_app, x_proto=1, x_host=1)
