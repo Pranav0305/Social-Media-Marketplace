@@ -13,6 +13,10 @@ from werkzeug.middleware.proxy_fix import ProxyFix
 from routes import profile, search  
 from bson.objectid import ObjectId
 from datetime import timedelta  # Import timedelta for session lifetime
+from extensions import mail
+from dotenv import load_dotenv
+
+load_dotenv()  # Load environment variables from .env file
 
 app = Flask(__name__)
 app.wsgi_app = ProxyFix(app.wsgi_app, x_proto=1, x_host=1)
@@ -27,6 +31,14 @@ app.config.update(
     SESSION_COOKIE_SAMESITE='Lax',   # Helps mitigate CSRF attacks
     PERMANENT_SESSION_LIFETIME=timedelta(minutes=10)  # Set session lifetime to 10 minutes
 )
+app.config.update(
+    MAIL_SERVER='smtp.gmail.com',
+    MAIL_PORT=587,
+    MAIL_USE_TLS=True,
+    MAIL_USERNAME=os.getenv("MAIL_USERNAME"),
+    MAIL_PASSWORD=os.getenv("MAIL_PASSWORD")
+)
+
 
 app.secret_key = "your_secret_key" 
 
