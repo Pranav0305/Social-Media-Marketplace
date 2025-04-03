@@ -1,4 +1,4 @@
-from flask import Flask,  send_from_directory
+from flask import Flask, send_from_directory, session
 from config import Config
 from extensions import mongo, login_manager  
 from routes.auth import auth_bp
@@ -11,7 +11,8 @@ from routes.posting import posting_bp
 from flask_login import UserMixin
 from werkzeug.middleware.proxy_fix import ProxyFix
 from routes import profile, search  
-from bson.objectid import ObjectId  # new
+from bson.objectid import ObjectId
+from datetime import timedelta  # Import timedelta for session lifetime
 
 app = Flask(__name__)
 app.wsgi_app = ProxyFix(app.wsgi_app, x_proto=1, x_host=1)
@@ -19,14 +20,20 @@ app.wsgi_app = ProxyFix(app.wsgi_app, x_proto=1, x_host=1)
 app.register_blueprint(search.search_bp)
 
 app.config.from_object(Config)
-# Configure secure session cookies
+# Configure secure session cookies and session lifetime
 app.config.update(
     SESSION_COOKIE_SECURE=True,    # Cookie is only sent over HTTPS
-    SESSION_COOKIE_HTTPONLY=True,  # Cookie is not accessible via JavaScript
-    SESSION_COOKIE_SAMESITE='Lax'  # Helps mitigate CSRF attacks
+    SESSION_COOKIE_HTTPONLY=True,    # Cookie is not accessible via JavaScript
+    SESSION_COOKIE_SAMESITE='Lax',   # Helps mitigate CSRF attacks
+    PERMANENT_SESSION_LIFETIME=timedelta(minutes=10)  # Set session lifetime to 10 minutes
 )
 
 app.secret_key = "your_secret_key" 
+
+# Mark every session as permanent to enforce the lifetime
+@app.before_request
+def make_session_permanent():
+    session.permanent = True
 
 # Set cache control headers after every request
 @app.after_request
@@ -71,4 +78,3 @@ app.register_blueprint(posting_bp)
 
 if __name__ == '__main__':
     app.run(ssl_context=('cert.pem', 'key.pem'), host='0.0.0.0', port=5000, debug=False)
-
