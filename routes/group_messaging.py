@@ -1,4 +1,4 @@
-from flask import Blueprint, render_template, request, redirect, url_for, flash, session, jsonify, current_app
+from flask import Blueprint, render_template, request, redirect, url_for, flash, session, jsonify, current_app, Response
 from bson.objectid import ObjectId
 from datetime import datetime
 from extensions import mongo
@@ -101,14 +101,11 @@ def group_messages():
         flash('Message sent to the group and stored in blockchain!')
         return redirect(url_for('group_messaging.group_messages'))
 
-    # --- NEW RESTRICTION: Only fetch messages from groups where the user is a member ---
-    # Fetch groups where the user is a member (get both _id and name)
+    # --- Only fetch messages from groups where the user is a member ---
     user_groups = list(mongo.db.groups.find({"members": {"$in": [user_id]}}, {"_id": 1, "name": 1}))
-    # Extract the group IDs as strings
     group_ids = [str(group["_id"]) for group in user_groups]
-    # Only fetch messages from these groups
     group_messages_cursor = mongo.db.group_messages.find({"group_id": {"$in": group_ids}}).sort("timestamp", -1)
-    # --------------------------------------------------------------------------
+    # ------------------------------------------------------------------------
 
     messages_list = []
     for msg in group_messages_cursor:
@@ -140,14 +137,13 @@ def create_group():
         return redirect(url_for('auth.login'))
         
     user = mongo.db.users.find_one({'_id': ObjectId(session['user_id'])})
-    # Only approved users can create groups or view the list of users
     if user.get("status") != "approved":
         flash("You are not approved to create groups or view all users.", "warning")
         return redirect(url_for('group_messaging.group_messages'))
 
     if request.method == 'POST':
         group_name = request.form.get('group_name')
-        members = request.form.getlist('members')  # List of usernames
+        members = request.form.getlist('members')
 
         existing_group = mongo.db.groups.find_one({'name': group_name})
         if existing_group:
@@ -174,6 +170,17 @@ def create_group():
         flash(f'Group "{group_name}" created successfully!')
         return redirect(url_for('group_messaging.group_messages'))
 
-    # Only list approved users in the create group page
     users = mongo.db.users.find({"status": "approved"}, {"username": 1})
     return render_template('create_group.html', users=users)
+
+# ===== New Route to Serve Group Media Files =====
+@group_messaging_bp.route('/group_media/<file_id>', methods=['GET'])
+def serve_media(file_id):
+    fs = GridFS(mongo.db)
+    try:
+        file_doc = fs.get(ObjectId(file_id))
+    except Exception as e:
+        flash("File not found: " + str(e))
+        return redirect(url_for('group_messaging.group_messages'))
+    
+    return Response(file_doc.read(), mimetype=file_doc.content_type)
