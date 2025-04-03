@@ -1,15 +1,17 @@
-from flask import Blueprint, render_template, request, redirect, url_for, flash, session
+from flask import Blueprint, render_template, request, redirect, url_for, flash, session, send_file
 import os
 from werkzeug.utils import secure_filename
 from bson import ObjectId
 from extensions import mongo
+from gridfs import GridFS
 
 profile_bp = Blueprint('profile_bp', __name__)
 UPLOAD_FOLDER = 'static/uploads/'
-ALLOWED_EXTENSIONS = {'pdf', 'png', 'jpg', 'jpeg'}
+ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg'}  # 'pdf' removed since documents are now handled via GridFS
 
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+
 @profile_bp.route('/send_friend_request/<user_id>', methods=['POST'])
 def send_friend_request(user_id):
     if 'user_id' not in session:
@@ -24,6 +26,7 @@ def send_friend_request(user_id):
 
     flash("Friend request sent.")
     return redirect(url_for('profile_bp.profile_view', user_id=user_id))
+
 @profile_bp.route('/accept_friend_request/<request_id>', methods=['POST'])
 def accept_friend_request(request_id):
     mongo.db.friend_requests.update_one(
@@ -32,6 +35,7 @@ def accept_friend_request(request_id):
     )
     flash("Friend request accepted.")
     return redirect(url_for('profile_bp.profile'))
+
 @profile_bp.route('/block_user/<user_id>', methods=['POST'])
 def block_user(user_id):
     mongo.db.blocks.insert_one({
@@ -40,6 +44,7 @@ def block_user(user_id):
     })
     flash("User blocked.")
     return redirect(url_for('profile_bp.profile_view', user_id=user_id))
+
 @profile_bp.route('/report_user/<user_id>', methods=['POST'])
 def report_user(user_id):
     reason = request.form.get('reason')
@@ -63,17 +68,14 @@ def profile():
         flash("User not found.")
         return redirect(url_for('auth.login'))
 
-    # Handle profile update form submission
     if request.method == 'POST':
         bio = request.form.get('bio')
         file = request.files.get('profile_picture')
-        update_fields = {"profile.bio": bio}  # Update bio
+        update_fields = {"profile.bio": bio}
 
-        # Process file upload if provided and allowed
         if file and allowed_file(file.filename):
             filename = secure_filename(file.filename)
             file_path = os.path.join(UPLOAD_FOLDER, filename)
-            # Ensure the upload folder exists
             os.makedirs(UPLOAD_FOLDER, exist_ok=True)
             file.save(file_path)
             update_fields["profile.profile_picture"] = filename
@@ -82,8 +84,6 @@ def profile():
         flash("Profile updated successfully!")
         return redirect(url_for('profile_bp.profile'))
 
-    # For GET requests, process data to show profile
-    # Get incoming friend requests
     incoming_requests = mongo.db.friend_requests.find({
         "to_user": user_id,
         "status": "pending"
@@ -99,7 +99,6 @@ def profile():
                 "sender_id": str(sender["_id"])
             })
 
-    # Get accepted friend relationships
     accepted = mongo.db.friend_requests.find({
         "$or": [
             {"from_user": user_id},
@@ -138,7 +137,6 @@ def profile_view(user_id):
 
     is_own_profile = str(session['user_id']) == str(user_id)
 
-    # Get accepted friend relationships for the user being viewed
     accepted = mongo.db.friend_requests.find({
         "$or": [
             {"from_user": ObjectId(user_id)},
@@ -156,16 +154,39 @@ def profile_view(user_id):
 
     friends = list(mongo.db.users.find({"_id": {"$in": friend_ids}}))
 
-
     return render_template(
         'profile.html',
         user=user_data,
         is_own_profile=is_own_profile,
         friends=friends
     )
+
 @profile_bp.route('/reject_friend_request/<request_id>', methods=['POST'])
 def reject_friend_request(request_id):
     mongo.db.friend_requests.delete_one({"_id": ObjectId(request_id)})
     flash("Friend request rejected.")
     return redirect(url_for('profile_bp.profile'))
 
+# === New Route for Viewing Registration Document by the User ===
+@profile_bp.route('/document/<document_id>')
+def view_document(document_id):
+    if 'user_id' not in session:
+        flash("You need to log in first.")
+        return redirect(url_for('auth.login'))
+    # Verify that the logged-in user's document matches the requested document ID
+    user_data = mongo.db.users.find_one({"_id": ObjectId(session['user_id'])})
+    if not user_data or user_data.get("document") != document_id:
+        flash("Unauthorized access to document.")
+        return redirect(url_for('profile_bp.profile'))
+    fs = GridFS(mongo.db)
+    try:
+        grid_out = fs.get(ObjectId(document_id))
+        return send_file(
+            grid_out,
+            download_name=grid_out.filename,
+            mimetype=grid_out.content_type,
+            as_attachment=False
+        )
+    except Exception as e:
+        flash("Unable to retrieve document: " + str(e), "danger")
+        return redirect(url_for('profile_bp.profile'))
