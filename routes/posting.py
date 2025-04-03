@@ -61,7 +61,11 @@ def view_posts():
     posts = list(mongo.db.posts.find())
 
     formatted_posts = [
-        {"caption": post["post_caption"], "image": post["post_image"]}
+        {
+            "post_user" : post["post_user"],
+            "caption": post["post_caption"], 
+            "image": post["post_image"]
+         }
         for post in posts
     ]
 

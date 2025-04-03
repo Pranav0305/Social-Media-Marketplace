@@ -38,6 +38,7 @@
 
     {% for post in posts %}
     <div class="post-container">
+        <p class="post_user">{{ post.post_user }}</p>
         <img src="data:image/jpeg;base64,{{ post.image }}" alt="Post Image" class="post-image">
         <p class="caption">{{ post.caption }}</p>
     </div>
