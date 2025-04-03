@@ -347,7 +347,6 @@ def reset_password():
         return redirect(url_for('auth.login'))
 
     return render_template('reset_password.html')
-
 @auth_bp.route('/forgot_password', methods=['GET', 'POST'])
 def forgot_password():
     if request.method == 'POST':
@@ -362,8 +361,28 @@ def forgot_password():
         session['reset_otp'] = otp
         session['otp_timestamp'] = time.time()
 
-        print("Reset OTP:", otp)  # Send via email in production
-        flash("OTP sent to your email.")
+        # ✅ Send the OTP via email
+        msg = Message(
+            subject="Your OTP to Reset Password",
+            sender=os.getenv("MAIL_USERNAME"),
+            recipients=[email]
+        )
+        msg.body = f"""Hi {user['username']},
+
+Your OTP to reset your password is: {otp}
+
+It will expire in 5 minutes.
+
+If this wasn't you, please ignore this email.
+"""
+        try:
+            mail.send(msg)
+            flash("OTP sent to your email.", "info")
+        except Exception as e:
+            print("Failed to send OTP email:", e)
+            flash("Failed to send OTP. Please try again.", "danger")
+            return redirect(url_for('auth.forgot_password'))
+
         return redirect(url_for('auth.reset_password'))
 
     return render_template('forgot_password.html')
