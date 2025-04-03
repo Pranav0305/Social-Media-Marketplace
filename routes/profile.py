@@ -50,20 +50,42 @@ def report_user(user_id):
     })
     flash("User reported.")
     return redirect(url_for('profile_bp.profile_view', user_id=user_id))
-@profile_bp.route('/')
+
+@profile_bp.route('/', methods=['GET', 'POST'])
 def profile():
     if 'user_id' not in session:
         flash("You need to log in first.")
         return redirect(url_for('auth.login'))
 
-    user_data = mongo.db.users.find_one({"_id": ObjectId(session['user_id'])})
+    user_id = ObjectId(session['user_id'])
+    user_data = mongo.db.users.find_one({"_id": user_id})
     if not user_data:
         flash("User not found.")
         return redirect(url_for('auth.login'))
 
+    # Handle profile update form submission
+    if request.method == 'POST':
+        bio = request.form.get('bio')
+        file = request.files.get('profile_picture')
+        update_fields = {"profile.bio": bio}  # Update bio
+
+        # Process file upload if provided and allowed
+        if file and allowed_file(file.filename):
+            filename = secure_filename(file.filename)
+            file_path = os.path.join(UPLOAD_FOLDER, filename)
+            # Ensure the upload folder exists
+            os.makedirs(UPLOAD_FOLDER, exist_ok=True)
+            file.save(file_path)
+            update_fields["profile.profile_picture"] = filename
+
+        mongo.db.users.update_one({"_id": user_id}, {"$set": update_fields})
+        flash("Profile updated successfully!")
+        return redirect(url_for('profile_bp.profile'))
+
+    # For GET requests, process data to show profile
     # Get incoming friend requests
     incoming_requests = mongo.db.friend_requests.find({
-        "to_user": ObjectId(session['user_id']),
+        "to_user": user_id,
         "status": "pending"
     })
 
@@ -80,15 +102,15 @@ def profile():
     # Get accepted friend relationships
     accepted = mongo.db.friend_requests.find({
         "$or": [
-            {"from_user": ObjectId(session['user_id'])},
-            {"to_user": ObjectId(session['user_id'])}
+            {"from_user": user_id},
+            {"to_user": user_id}
         ],
         "status": "accepted"
     })
 
     friend_ids = []
     for fr in accepted:
-        if fr["from_user"] == ObjectId(session['user_id']):
+        if fr["from_user"] == user_id:
             friend_ids.append(fr["to_user"])
         else:
             friend_ids.append(fr["from_user"])
@@ -102,6 +124,7 @@ def profile():
         friend_requests=requests_with_senders,
         friends=friends
     )
+
 @profile_bp.route('/<user_id>')
 def profile_view(user_id):
     if 'user_id' not in session:
