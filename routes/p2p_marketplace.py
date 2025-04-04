@@ -12,6 +12,7 @@ def marketplace():
         return redirect(url_for('auth.login'))
     return render_template("add_product.html")
 from bson import ObjectId
+
 @p2p_marketplace_bp.route("/confirm_product", methods=['POST'])
 def add_product():
     if 'user_id' not in session:  
@@ -96,3 +97,34 @@ def buy_product(product_id):
     if not product:
         return "Product not found", 404
     return render_template("payment_gateway.html", product=product)
+@p2p_marketplace_bp.route("/complete_purchase/<product_id>", methods=["POST"])
+def complete_purchase(product_id):
+    if 'user_id' not in session:
+        flash('Please log in first.')
+        return redirect(url_for('auth.login'))
+
+    buyer_id = ObjectId(session['user_id'])
+    buyer = mongo.db.users.find_one({"_id": buyer_id})
+    buyer_username = buyer["username"]
+
+    product = mongo.db.Products.find_one({"_id": product_id})
+    if not product:
+        flash("Product not found.")
+        return redirect(url_for('marketplace.view_products'))
+
+    seller_username = product["product_seller_username"]
+    seller = mongo.db.users.find_one({"username": seller_username})
+    seller_id = seller["_id"]
+
+    # ✅ Notify the seller
+    mongo.db.notifications.insert_one({
+        "user_id": ObjectId(seller_id),
+        "type": "transaction",
+        "message": f"{buyer_username} bought your product: {product['product_name']}",
+        "timestamp": datetime.utcnow(),
+        "is_read": False,
+        "link": "/marketplace"
+    })
+
+    flash("Purchase completed! The seller has been notified.")
+    return redirect(url_for('marketplace.view_products'))
