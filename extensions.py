@@ -4,3 +4,6 @@ login_manager = LoginManager()
 
 
 mongo = PyMongo()  
+from flask_mail import Mail
+
+mail = Mail()
