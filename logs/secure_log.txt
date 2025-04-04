@@ -23,3 +23,4 @@
 {"timestamp": "2025-04-03 23:20:26", "user_id": "you", "action": "User Login", "status": "Success"} | 781a7663507b88b1c56774ea96384ef568b978547cc0d1b57c72020223bed422
 {"timestamp": "2025-04-03 23:21:01", "user_id": "me", "action": "User Login", "status": "Success"} | 6aee505af77feb8e70e13430bcc22991f263d92bc67c893e482f7dfea26f2fe8
 {"timestamp": "2025-04-03 23:58:19", "user_id": "you", "action": "User Login", "status": "Success"} | 112567d802435d52d07957ef5e01b7eb156016a80edd1d9ee4006ea26c289f06
+{"timestamp": "2025-04-05 00:15:39", "user_id": "admin", "action": "Admin", "status": "logged in"} | c366ae3a780840c0e23878c15048b6099cdb5147301484cae461dfb3f092582b

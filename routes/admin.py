@@ -45,6 +45,7 @@ def logout():
 @admin_bp.route('/')
 def admin_home():
     return redirect(url_for('admin.dashboard'))
+
 @admin_bp.route('/dashboard')
 @login_required
 def dashboard():
@@ -86,3 +87,41 @@ def view_document(document_id):
     except Exception as e:
         flash("Unable to retrieve document: " + str(e), "danger")
         return redirect(url_for('admin.dashboard'))
+    
+@admin_bp.route('/view_posts')
+def admin_view_posts():
+    posts = list(mongo.db.posts.find())
+
+    formatted_posts = []
+    for post in posts:
+        formatted_post = {
+            "post_id": post.get("post_id"),
+            "post_user": post.get("post_user"),
+            "caption": post.get("post_caption"),
+            "image": post.get("post_image"),
+            "comments": post.get("comments", [])  # optional field
+        }
+        formatted_posts.append(formatted_post)
+
+    return render_template("admin_view_posts.html", posts=formatted_posts)
+
+@admin_bp.route('/delete_post/<post_id>', methods=['POST'])
+def delete_post(post_id):
+    result = mongo.db.posts.delete_one({"post_id": post_id})
+    posts = list(mongo.db.posts.find())
+
+    formatted_posts = []
+    for post in posts:
+        formatted_post = {
+            "post_id": post.get("post_id"),
+            "post_user": post.get("post_user"),
+            "caption": post.get("post_caption"),
+            "image": post.get("post_image"),
+            "comments": post.get("comments", [])  # optional field
+        }
+        formatted_posts.append(formatted_post)
+
+    if result.deleted_count > 0:
+        return  render_template("admin_view_posts.html", posts=formatted_posts)
+    else:
+        return jsonify({"success": False, "message": "Post not found"})

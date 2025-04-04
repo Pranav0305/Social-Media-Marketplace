@@ -4,3 +4,5 @@ cryptography==3.4.8
 werkzeug==2.0.3
 flask-login
 pycryptodome
+dotenv
+flask_mail

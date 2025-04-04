@@ -84,9 +84,28 @@
         margin-bottom: 5px;
         border-radius: 5px;
     }
+    .create-post-btn {
+        padding: 10px 20px;
+        font-size: 16px;
+        background-color: #17a2b8;
+        color: white;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+        transition: background 0.3s ease;
+    }
+    
+    .create-post-btn:hover {
+        background-color: #138496;
+    }
+    
 </style>
 
 <h2 style="text-align: center;">All Posts</h2>
+
+<div style="text-align: center; margin-bottom: 20px;">
+    <button class="create-post-btn" onclick="window.location.href='/add_post'">Create Post</button>
+</div>
 
 <div class="posts-container">
     {% for post in posts %}

@@ -8,6 +8,7 @@ from routes.messaging import messaging_bp
 from routes.home import home_bp
 from routes.p2p_marketplace import p2p_marketplace_bp
 from routes.posting import posting_bp
+from routes.commenting import comment_bp
 from flask_login import UserMixin
 from werkzeug.middleware.proxy_fix import ProxyFix
 from routes import profile, search  
@@ -85,6 +86,7 @@ app.register_blueprint(messaging_bp)
 app.register_blueprint(home_bp)
 app.register_blueprint(p2p_marketplace_bp)
 app.register_blueprint(posting_bp)
+app.register_blueprint(comment_bp)
 from flask_mail import Message
 from extensions import mail
 
