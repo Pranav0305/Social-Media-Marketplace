@@ -7,8 +7,8 @@ import base64
 
 comment_bp = Blueprint("comment", __name__)
 
-@comment_bp.route("/add_comment", methods=["GET", "POST"])
-def add_comment():   
+@comment_bp.route("/add_comment/<post_id>", methods=["GET", "POST"])
+def add_comment(post_id):   
     if 'user_id' not in session:  
         return jsonify({"message": "User not logged in"}), 401
 
@@ -23,24 +23,43 @@ def add_comment():
     
     username = user.get("username")
     
-    data = request.get_json()
-    post_id = data.get("post_id")
-    comment_text = data.get("text")
+    # data = request.get_json()
+    # post_id = data.get("post_id")
+    # comment_text = data.get("text")
 
-    print(post_id)
+    # print(post_id)
 
-    if not post_id or not comment_text:
-        return jsonify({"success": False, "message": "Missing data"}), 400
+    # if not post_id or not comment_text:
+    #     return jsonify({"success": False, "message": "Missing data"}), 400
     
+    # comment = {
+    #     "username": username,
+    #     "text": comment_text
+    # }
+
+    # # Insert comment into the correct post
+    # mongo.db.posts.update_one(
+    #     {"post_id": ObjectId(post_id)},
+    #     {"$push": {"comments": comment}}
+    # )
+
+    # return jsonify({"success": True, "username": username})
+
+
+    comment_text = request.form.get("text")
+    if not comment_text:
+        flash("Comment cannot be empty.")
+        return redirect(url_for("posting.view_posts"))
+
     comment = {
-        "username": username,
+        "username": user.get("username"),
         "text": comment_text
     }
 
-    # Insert comment into the correct post
     mongo.db.posts.update_one(
-        {"post_id": ObjectId(post_id)},
+        {"post_id": post_id},
         {"$push": {"comments": comment}}
     )
 
-    return jsonify({"success": True, "username": username})
+    flash("Comment added successfully.")
+    return redirect(url_for("posting.view_posts"))

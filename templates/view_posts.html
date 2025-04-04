@@ -34,18 +34,6 @@
         font-size: 16px;
         color: #333;
     }
-    .comment-button {
-        margin-top: 10px;
-        padding: 8px 12px;
-        background: #007bff;
-        color: white;
-        border: none;
-        border-radius: 4px;
-        cursor: pointer;
-    }
-    .comment-button:hover {
-        background: #0056b3;
-    }
     .comment-section {
         margin-top: 10px;
         text-align: left;
@@ -93,18 +81,30 @@
         border-radius: 5px;
         cursor: pointer;
         transition: background 0.3s ease;
+        display: block;
+        margin: 0 auto;
     }
-    
     .create-post-btn:hover {
         background-color: #138496;
     }
-    
+    .delete-btn {
+        margin-top: 10px;
+        padding: 8px 12px;
+        background: #dc3545;
+        color: white;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+    }
+    .delete-btn:hover {
+        background: #c82333;
+    }
 </style>
 
 <h2 style="text-align: center;">All Posts</h2>
 
 <div style="text-align: center; margin-bottom: 20px;">
-    <button class="create-post-btn" onclick="window.location.href='/add_post'">Create Post</button>
+    <button class="create-post-btn" onclick="window.location.href='{{ url_for('posting.add_post') }}'">Create Post</button>
 </div>
 
 <div class="posts-container">
@@ -115,47 +115,21 @@
         <p class="caption">{{ post.caption }}</p>
 
         <!-- Comment Section -->
-        <div class="comment-section" id="comment-section-{{ post.post_id }}">
-            <ul class="comment-list" id="comment-list-{{ post.post_id }}">
+        <div class="comment-section">
+            <ul class="comment-list">
                 {% for comment in post.comments %}
                 <li class="comment-item"><strong>{{ comment.username }}:</strong> {{ comment.text }}</li>
                 {% endfor %}
             </ul>
 
-            <input type="text" class="comment-box" id="comment-box-{{ post.post_id }}" placeholder="Write a comment...">
-            <button class="comment-submit" onclick="submitComment('{{ post.post_id }}')">Post</button>
+            <!-- Comment Form -->
+            <form method="POST" action="{{ url_for('comment.add_comment', post_id=post.post_id) }}">
+                <input type="text" name="text" class="comment-box" placeholder="Write a comment..." required>
+                <button type="submit" class="comment-submit">Post</button>
+            </form>
         </div>
     </div>
     {% endfor %}
 </div>
 
-<script>
-    async function submitComment(post_id) {
-        let commentBox = document.getElementById(`comment-box-${post_id}`);
-        let commentText = commentBox.value.trim();
-
-        if (!commentText) {
-            alert("Comment cannot be empty!");
-            return;
-        }
-
-        let response = await fetch("/add_comment", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ post_id: post_id, text: commentText })
-        });
-
-        let result = await response.json();
-        if (result.success) {
-            let commentList = document.getElementById(`comment-list-${post_id}`);
-            let newComment = document.createElement("li");
-            newComment.className = "comment-item";
-            newComment.innerHTML = `<strong>${result.username}:</strong> ${commentText}`;
-            commentList.appendChild(newComment);
-            commentBox.value = ""; // Clear input
-        } else {
-            alert("Failed to add comment.");
-        }
-    }
-</script>
 {% endblock %}

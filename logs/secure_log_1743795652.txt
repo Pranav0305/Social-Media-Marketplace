@@ -24,3 +24,7 @@
 {"timestamp": "2025-04-03 23:21:01", "user_id": "me", "action": "User Login", "status": "Success"} | 6aee505af77feb8e70e13430bcc22991f263d92bc67c893e482f7dfea26f2fe8
 {"timestamp": "2025-04-03 23:58:19", "user_id": "you", "action": "User Login", "status": "Success"} | 112567d802435d52d07957ef5e01b7eb156016a80edd1d9ee4006ea26c289f06
 {"timestamp": "2025-04-05 00:15:39", "user_id": "admin", "action": "Admin", "status": "logged in"} | c366ae3a780840c0e23878c15048b6099cdb5147301484cae461dfb3f092582b
+{"timestamp": "2025-04-05 01:10:19", "user_id": "pranav_fr", "action": "User Registered", "status": "Success"} | 696ed4fc0ecd7aedc664fbc344e295af4d95e2c0e3112993682f104460e3393c
+{"timestamp": "2025-04-05 01:10:40", "user_id": "admin", "action": "Admin", "status": "logged in"} | 0bc57f6beecf9acfd5040c27ccb8022584b82359b96be8b78b416f452d1ce230
+{"timestamp": "2025-04-05 01:10:42", "user_id": "67f035a354adb49cab854e2a", "action": "Admin Approval", "status": "User Approved"} | f8d1c9612d5306904e6ff81af61ac7c39b6abe8ca2608c2ee3c9bb356f3ee708
+{"timestamp": "2025-04-05 01:10:52", "user_id": "pranav_fr", "action": "User Login", "status": "Success"} | 99b6e39399bbb93964e5b3463ce9311f88db43a2bbf6af0b2e06b52e3a5dfe15
