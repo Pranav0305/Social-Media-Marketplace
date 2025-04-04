@@ -1,0 +1,38 @@
+{% extends "layout.html" %}
+
+{% block title %}Add Comment{% endblock %}
+
+{% block content %}
+    <style>
+        .comment-container {
+            width: 400px;
+            background: white;
+            padding: 15px;
+            margin: 20px auto;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            text-align: center;
+        }
+        input, textarea {
+            width: 100%;
+            margin: 10px 0;
+            padding: 8px;
+        }
+        button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 10px;
+            cursor: pointer;
+            width: 100%;
+        }
+    </style>
+
+    <div class="comment-container">
+        <h2>Add a Comment</h2>
+        <form method="POST">
+            <textarea name="comment" placeholder="Write a comment..." required></textarea>
+            <button type="submit">Post Comment</button>
+        </form>
+    </div>
+{% endblock %}
