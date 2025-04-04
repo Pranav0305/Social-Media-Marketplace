@@ -48,8 +48,6 @@ def upload():
     }
 
     mongo.db.posts.insert_one(post_data)
-
-    print(post_data)
     return jsonify({"message": "Post uploaded", "post_id": str(post_id)}), 201
 
 
@@ -62,9 +60,11 @@ def view_posts():
 
     formatted_posts = [
         {
+            "post_id" : post["post_id"],
             "post_user" : post["post_user"],
             "caption": post["post_caption"], 
-            "image": post["post_image"]
+            "image": post["post_image"],
+            "comments": post.get("comments", [])
          }
         for post in posts
     ]

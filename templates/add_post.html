@@ -1,17 +1,14 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Create a Post</title>
+{% extends "layout.html" %}
+
+{% block title %}Create a Post{% endblock %}
+
+{% block content %}
     <style>
-        body {
-            font-family: Arial, sans-serif;
+        .container {
             display: flex;
             justify-content: center;
             align-items: center;
             height: 100vh;
-            background-color: #f0f0f0;
         }
         .post-container {
             width: 400px;
@@ -24,7 +21,6 @@
         .post-image {
             width: 100%;
             max-height: 300px;
-            object-fit: cover;
             border-radius: 8px;
             display: none;
         }
@@ -46,20 +42,23 @@
             cursor: pointer;
             width: 100%;
         }
+        button:hover {
+            background: #0056b3;
+        }
     </style>
-</head>
-<body>
 
-    <div class="post-container">
-        <form id="postForm">
-            <input type="file" id="imageInput" accept="image/*" required>
-            <textarea id="captionInput" placeholder="Enter your caption..." required></textarea>
-            <button type="submit">Post</button>
-        </form>
+    <div class="container">
+        <div class="post-container">
+            <form id="postForm">
+                <input type="file" id="imageInput" accept="image/*" required>
+                <textarea id="captionInput" placeholder="Enter your caption..." required></textarea>
+                <button type="submit">Post</button>
+            </form>
 
-        <img id="previewImage" class="post-image">
-        <p id="previewCaption" class="caption"></p>
-        <p id="responseMessage"></p>
+            <img id="previewImage" class="post-image">
+            <p id="previewCaption" class="caption"></p>
+            <p id="responseMessage"></p>
+        </div>
     </div>
 
     <script>
@@ -103,6 +102,4 @@
             }
         });
     </script>
-
-</body>
-</html>
+{% endblock %}
