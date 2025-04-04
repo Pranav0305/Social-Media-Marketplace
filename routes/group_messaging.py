@@ -98,11 +98,29 @@ def group_messages():
         }
 
         mongo.db.group_messages.insert_one(message_data)
+        for member_id in group['members']:
+            if member_id != user_id:
+                mongo.db.notifications.insert_one({
+            "user_id": ObjectId(member_id),
+            "type": "group_message",
+            "message": f"New message from {user['username']} in group '{group_name}'",
+            "timestamp": datetime.utcnow(),
+            "is_read": False,
+            "link": "/group_messages"
+        })
+
         flash('Message sent to the group and stored in blockchain!')
         return redirect(url_for('group_messaging.group_messages'))
 
     # --- Only fetch messages from groups where the user is a member ---
-    user_groups = list(mongo.db.groups.find({"members": {"$in": [user_id]}}, {"_id": 1, "name": 1}))
+    user_groups = list(
+        mongo.db.groups.find(
+            {"members": {"$in": [ObjectId(user_id)]}}, 
+            {"_id": 1, "name": 1}
+        )
+    )
+
+
     group_ids = [str(group["_id"]) for group in user_groups]
     group_messages_cursor = mongo.db.group_messages.find({"group_id": {"$in": group_ids}}).sort("timestamp", -1)
     # ------------------------------------------------------------------------
@@ -129,21 +147,22 @@ def group_messages():
 @group_messaging_bp.route('/group_chain', methods=['GET'])
 def group_chain():
     return jsonify({"chain": group_blockchain.get_chain()}), 200
-
 @group_messaging_bp.route('/create_group', methods=['GET', 'POST'])
 def create_group():
     if 'user_id' not in session:
         flash('Please log in first.')
         return redirect(url_for('auth.login'))
-        
-    user = mongo.db.users.find_one({'_id': ObjectId(session['user_id'])})
+
+    current_user_id = ObjectId(session['user_id'])
+    user = mongo.db.users.find_one({'_id': current_user_id})
+
     if user.get("status") != "approved":
         flash("You are not approved to create groups or view all users.", "warning")
         return redirect(url_for('group_messaging.group_messages'))
 
     if request.method == 'POST':
         group_name = request.form.get('group_name')
-        members = request.form.getlist('members')
+        members = request.form.getlist('members')  # usernames from form
 
         existing_group = mongo.db.groups.find_one({'name': group_name})
         if existing_group:
@@ -154,7 +173,11 @@ def create_group():
         for username in members:
             user_obj = mongo.db.users.find_one({'username': username, 'status': 'approved'})
             if user_obj:
-                member_ids.append(str(user_obj['_id']))
+                member_ids.append(user_obj['_id'])
+
+        # ✅ Add the current user (creator) to the group
+        if current_user_id not in member_ids:
+            member_ids.append(current_user_id)
 
         if not member_ids:
             flash('No valid approved users found for the group!')
@@ -170,10 +193,14 @@ def create_group():
         flash(f'Group "{group_name}" created successfully!')
         return redirect(url_for('group_messaging.group_messages'))
 
-    users = mongo.db.users.find({"status": "approved"}, {"username": 1})
+    # ✅ Fetch all approved users except the current one
+    users = mongo.db.users.find(
+        {"status": "approved", "_id": {"$ne": current_user_id}},
+        {"username": 1}
+    )
+
     return render_template('create_group.html', users=users)
 
-# ===== New Route to Serve Group Media Files =====
 @group_messaging_bp.route('/group_media/<file_id>', methods=['GET'])
 def serve_media(file_id):
     fs = GridFS(mongo.db)
