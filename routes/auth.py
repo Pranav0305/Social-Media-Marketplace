@@ -121,7 +121,6 @@ from bson import ObjectId
 from gridfs import GridFS
 from security.secure_logger import write_secure_log
 import time
-# New imports for RSA key generation and AES encryption for the private key
 from Crypto.PublicKey import RSA
 from Crypto.Cipher import AES
 from Crypto.Protocol.KDF import PBKDF2
@@ -152,7 +151,6 @@ def test_email():
         return f"❌ Failed to send: {e}"
 
 ALLOWED_EXTENSIONS = {'pdf', 'png', 'jpg', 'jpeg'}
-
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
@@ -284,6 +282,7 @@ def verify_otp():
         return redirect(url_for('auth.register'))
 
     return render_template('verify_otp.html')
+
 @auth_bp.route('/login', methods=['GET', 'POST'])
 def login():
     if request.method == 'POST':
@@ -330,7 +329,6 @@ def login():
         return redirect(url_for('profile_bp.profile')) 
 
     return render_template('login.html')
-
 @auth_bp.route('/reset_password', methods=['GET', 'POST'])
 def reset_password():
     if request.method == 'POST':
@@ -347,6 +345,7 @@ def reset_password():
         return redirect(url_for('auth.login'))
 
     return render_template('reset_password.html')
+
 @auth_bp.route('/forgot_password', methods=['GET', 'POST'])
 def forgot_password():
     if request.method == 'POST':
@@ -391,5 +390,16 @@ If this wasn't you, please ignore this email.
 def logout():
     session.clear()
     flash('Logged out successfully.')
-    return redirect(url_for('auth.login'))    
+    return redirect(url_for('auth.login'))
+@auth_bp.context_processor
+def inject_notification_count():
+    if 'user_id' in session:
+        count = mongo.db.notifications.count_documents({
+            "user_id": ObjectId(session['user_id']),
+            "is_read": False
+        })
+        session['notification_count'] = count
+    else:
+        session['notification_count'] = 0
+    return dict()
 
