@@ -8,20 +8,35 @@ from gridfs import GridFS
 profile_bp = Blueprint('profile_bp', __name__)
 UPLOAD_FOLDER = 'static/uploads/'
 ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg'}  # 'pdf' removed since documents are now handled via GridFS
+from datetime import datetime
+
 
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
-
 @profile_bp.route('/send_friend_request/<user_id>', methods=['POST'])
 def send_friend_request(user_id):
     if 'user_id' not in session:
         flash("You need to log in first.")
         return redirect(url_for('auth.login'))
 
+    from_user_id = ObjectId(session['user_id'])
     mongo.db.friend_requests.insert_one({
-        "from_user": ObjectId(session['user_id']),
+        "from_user": from_user_id,
         "to_user": ObjectId(user_id),
         "status": "pending"
+    })
+
+    sender = mongo.db.users.find_one({"_id": from_user_id})
+    from_username = sender.get("username", "Someone")
+
+    # ✅ Now insert the notification
+    mongo.db.notifications.insert_one({
+        "user_id": ObjectId(user_id),
+        "type": "friend_request",
+        "message": f"{from_username} sent you a friend request",
+        "timestamp": datetime.utcnow(),
+        "is_read": False,
+        "link": f"/profile/{from_user_id}"
     })
 
     flash("Friend request sent.")
