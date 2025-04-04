@@ -81,8 +81,20 @@ def messages():
         }
 
         mongo.db.messages.insert_one(message_data)
+
+        # ✅ Insert notification for the recipient
+        mongo.db.notifications.insert_one({
+            "user_id": ObjectId(recipient['_id']),
+            "type": "message",
+            "message": f"New message from {sender_username}",
+            "timestamp": datetime.utcnow(),
+            "is_read": False,
+            "link": url_for('messaging.messages')  # or use a custom link like f"/messages/{sender_id}"
+        })
+
         flash('Message sent and stored in blockchain!')
         return redirect(url_for('messaging.messages'))
+
 
     messages_cursor = mongo.db.messages.find({
         '$or': [{'sender_id': user_id}, {'recipient_id': user_id}]
