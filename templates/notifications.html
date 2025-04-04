@@ -1,0 +1,16 @@
+{% extends "layout.html" %}
+{% block title %}Notifications{% endblock %}
+{% block content %}
+<h2>Notifications</h2>
+<ul>
+    {% for notif in notifications %}
+        <li style="margin-bottom: 1rem;">
+            {% if not notif.is_read %}<strong>{% endif %}
+                <a href="{{ notif.link }}">{{ notif.message }}</a>
+                — {{ notif.timestamp.strftime("%Y-%m-%d %H:%M") }}
+            {% if not notif.is_read %}</strong>{% endif %}
+            <a href="{{ url_for('notifications_bp.mark_as_read', notif_id=notif._id) }}">[Mark as read]</a>
+        </li>
+    {% endfor %}
+</ul>
+{% endblock %}
