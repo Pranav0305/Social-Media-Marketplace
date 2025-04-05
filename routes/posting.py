@@ -13,43 +13,44 @@ def add_post():
         flash('Please log in first.')
         return redirect(url_for('auth.login'))
     return render_template("add_post.html")
-
 @posting_bp.route('/upload_post', methods=['POST'])
 def upload():
     if 'user_id' not in session:  
-        return jsonify({"message": "User not logged in"}), 401
+        flash("You need to log in first.")
+        return redirect(url_for('auth.login'))
 
     try:
         user_id = ObjectId(session['user_id'])  
         user = mongo.db.users.find_one({"_id": user_id})  
     except:
-        return jsonify({"message": "Invalid user ID format"}), 400
+        flash("Invalid user ID.")
+        return redirect(url_for('posting.add_post'))
 
     if not user:
-        return jsonify({"message": "User not found"}), 400
+        flash("User not found.")
+        return redirect(url_for('posting.add_post'))
     
     caption = request.form.get("caption")
     image = request.files.get("image")
-    username = user.get("username")  # Get username from user document
+    username = user.get("username")
 
     if not caption or not image:
-        return jsonify({"error": "Missing image or caption"}), 400
+        flash("Both image and caption are required.", "danger")
+        return redirect(url_for('posting.add_post'))
 
-    # Convert image to base64
     image_data = base64.b64encode(image.read()).decode('utf-8')
-    
 
     post_id = str(ObjectId())
     post_data = {
-        "post_id" : post_id,
-        "post_image" : image_data,
-        "post_caption" : caption,
-        "post_user" : username
+        "post_id": post_id,
+        "post_image": image_data,
+        "post_caption": caption,
+        "post_user": username
     }
 
     mongo.db.posts.insert_one(post_data)
-    return jsonify({"message": "Post uploaded", "post_id": str(post_id)}), 201
-
+    flash("Post uploaded successfully!", "success")
+    return redirect(url_for('posting.view_posts'))  # ✅ Redirect to post list
 
 @posting_bp.route('/view_posts')
 def view_posts():

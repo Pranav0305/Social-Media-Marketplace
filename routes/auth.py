@@ -167,7 +167,6 @@ def validate_password(password):
     if not re.search(r"[!@#$%^&*(),.?\":{}|<>]", password):
         return "Password must contain at least one special character (!@#$%^&*())."
     return None  
-
 @auth_bp.route('/register', methods=['GET', 'POST'])
 def register():
     if request.method == 'POST':
@@ -212,11 +211,8 @@ def register():
             "tag": base64.b64encode(tag).decode()
         }
 
-        # ==== OTP Flow Integration ====
-        otp = generate_otp()
-        session['otp'] = otp
-        session['otp_timestamp'] = time.time()
-        session['pending_user'] = {
+        # Final user data to insert
+        user_data = {
             'email': email,
             'username': username,
             'password': hashed_password,
@@ -227,35 +223,13 @@ def register():
             'encrypted_private_key': encrypted_private_key
         }
 
-        # ==== Send OTP Email ====
-        msg = Message(
-            subject="Your OTP for Registration",
-            sender="your_email@gmail.com",  # Change to your real email
-            recipients=[email]
-        )
-        msg.body = f"""Hello {username},
-
-Your One-Time Password (OTP) for completing registration is: {otp}
-
-This OTP will expire in 5 minutes.
-
-If you did not request this, please ignore this email.
-
-Regards,
-Your Platform Team
-"""
-
-        try:
-            mail.send(msg)
-            flash('OTP sent to your email. Please verify to complete registration.', 'info')
-        except Exception as e:
-            print("Failed to send OTP email:", e)
-            flash("Could not send OTP email. Please try again.", 'danger')
-            return redirect(url_for('auth.register'))
-
-        return redirect(url_for('auth.verify_otp'))
+        mongo.db.users.insert_one(user_data)
+        flash('Registration successful! You may now log in.', 'success')
+        write_secure_log("User Registered", username, "Success")
+        return redirect(url_for('auth.login'))
 
     return render_template('register.html')
+
 @auth_bp.route('/verify_otp', methods=['GET', 'POST'])
 def verify_otp():
     if request.method == 'POST':
@@ -320,9 +294,12 @@ def login():
         # ===============================================================
 
         # Store user info in session
+        # Store user info in session
         session['user_id'] = str(user_data["_id"])
         session['username'] = user_data["username"]
-        session['status'] = user_data.get("status", "pending")  # e.g., 'approved' or 'pending'
+        session['email'] = user_data["email"]  # ✅ Add this line
+        session['document'] = user_data.get("document", "")  # ✅ Optional: for home.html
+        session['status'] = user_data.get("status", "pending")
 
         flash('Login successful!')
         write_secure_log("User Login", username, "Success")
@@ -331,42 +308,69 @@ def login():
     return render_template('login.html')
 @auth_bp.route('/reset_password', methods=['GET', 'POST'])
 def reset_password():
+    if 'reset_email' not in session:
+        flash("Unauthorized access to password reset.", "danger")
+        return redirect(url_for('auth.login'))
+
     if request.method == 'POST':
         otp = request.form['otp']
         new_password = request.form['password']
 
+        # Validate OTP and expiration
         if otp != session.get('reset_otp') or time.time() - session.get('otp_timestamp', 0) > 300:
             flash("Invalid or expired OTP.")
             return redirect(url_for('auth.forgot_password'))
 
         email = session.get('reset_email')
-        mongo.db.users.update_one({"email": email}, {"$set": {"password": new_password}})
+        if not email:
+            flash("Session expired. Please try again.", "danger")
+            return redirect(url_for('auth.forgot_password'))
+
+        password_error = validate_password(new_password)
+        if password_error:
+            flash(password_error, 'danger')
+            return redirect(url_for('auth.reset_password'))
+
+        hashed_password = generate_password_hash(new_password)
+        mongo.db.users.update_one({"email": email}, {"$set": {"password": hashed_password}})
+
+        # Cleanup
+        session.pop('reset_otp', None)
+        session.pop('reset_email', None)
+        session.pop('otp_timestamp', None)
+
         flash("Password reset successfully.")
         return redirect(url_for('auth.login'))
 
     return render_template('reset_password.html')
-
 @auth_bp.route('/forgot_password', methods=['GET', 'POST'])
 def forgot_password():
     if request.method == 'POST':
-        email = request.form['email']
-        user = mongo.db.users.find_one({"email": email})
-        if not user:
-            flash("Email not found.")
+        username = request.form['username']
+        user = mongo.db.users.find_one({"username": username})
+
+        # Rate limiting: Max 3 OTPs per 5 mins
+        now = time.time()
+        attempts = session.get("otp_attempts", [])
+        attempts = [t for t in attempts if now - t < 300]
+        if len(attempts) >= 3:
+            flash("Too many OTP requests. Please wait before trying again.", "warning")
             return redirect(url_for('auth.forgot_password'))
+        session['otp_attempts'] = attempts + [now]
 
-        otp = generate_otp()
-        session['reset_email'] = email
-        session['reset_otp'] = otp
-        session['otp_timestamp'] = time.time()
+        if user:
+            email = user.get("email")
+            otp = generate_otp()
+            session['reset_email'] = email
+            session['reset_otp'] = otp
+            session['otp_timestamp'] = now
 
-        # ✅ Send the OTP via email
-        msg = Message(
-            subject="Your OTP to Reset Password",
-            sender=os.getenv("MAIL_USERNAME"),
-            recipients=[email]
-        )
-        msg.body = f"""Hi {user['username']},
+            msg = Message(
+                subject="Your OTP to Reset Password",
+                sender=os.getenv("MAIL_USERNAME"),
+                recipients=[email]
+            )
+            msg.body = f"""Hi {username},
 
 Your OTP to reset your password is: {otp}
 
@@ -374,13 +378,16 @@ It will expire in 5 minutes.
 
 If this wasn't you, please ignore this email.
 """
-        try:
-            mail.send(msg)
-            flash("OTP sent to your email.", "info")
-        except Exception as e:
-            print("Failed to send OTP email:", e)
-            flash("Failed to send OTP. Please try again.", "danger")
-            return redirect(url_for('auth.forgot_password'))
+            try:
+                mail.send(msg)
+                flash("If this username is registered, an OTP has been sent to the associated email.", "info")
+                write_secure_log("OTP Sent", username, "Success")
+            except Exception as e:
+                flash("There was an error sending the OTP. Please try again later.", "danger")
+                write_secure_log("OTP Email Failed", username, f"Error: {str(e)}")
+        else:
+            flash("If this username is registered, an OTP has been sent.", "info")
+            write_secure_log("OTP Request", username, "Failed - User not found")
 
         return redirect(url_for('auth.reset_password'))
 
