@@ -264,72 +264,92 @@ Your Platform Team
     # Render the OTP verification page for payment
     return render_template("verify_payment_otp.html", product_id=product_id)
 
-
 @p2p_marketplace_bp.route("/complete_payment/<product_id>", methods=["POST"])
 def complete_payment(product_id):
     if 'user_id' not in session:
         flash('Please log in first.')
         return redirect(url_for('auth.login'))
-    
-    # Verify the OTP entered by the user
+
+    # --- OTP Verification ---
     entered_otp = request.form.get("otp")
     actual_otp = session.get("payment_otp")
     timestamp = session.get("payment_otp_timestamp")
-    if not actual_otp or time.time() - timestamp > 300:
-         flash("OTP expired. Please try the payment process again.", "danger")
-         return redirect(url_for('marketplace.buy_product', product_id=product_id))
-    if entered_otp != actual_otp:
-         flash("Incorrect OTP. Please try again.", "danger")
-         return redirect(url_for('marketplace.buy_product', product_id=product_id))
     
-    # Retrieve buyer and product details
+    if not actual_otp or time.time() - timestamp > 300:
+        flash("OTP expired. Please try the payment process again.", "danger")
+        return redirect(url_for('marketplace.buy_product', product_id=product_id))
+    
+    if entered_otp != actual_otp:
+        flash("Incorrect OTP. Please try again.", "danger")
+        return redirect(url_for('marketplace.buy_product', product_id=product_id))
+
+    # --- Get Buyer Info ---
     buyer_id = ObjectId(session['user_id'])
     buyer = mongo.db.users.find_one({"_id": buyer_id})
-    buyer_username = buyer["username"]
+    if not buyer:
+        flash("Buyer not found.")
+        return redirect(url_for('marketplace.view_products'))
 
+    buyer_username = buyer.get("username")
+    buyer_email = buyer.get("email")
+
+    # --- Get Product Info ---
     product = mongo.db.Products.find_one({"_id": product_id})
     if not product:
-         flash("Product not found.")
-         return redirect(url_for('marketplace.view_products'))
+        flash("Product not found.")
+        return redirect(url_for('marketplace.view_products'))
 
-    seller_username = product["product_seller_username"]
+    product_name = product.get("product_name")
+    product_price = product.get("product_price")
+    seller_username = product.get("product_seller_username")
+
+    # --- Get Seller Info ---
     seller = mongo.db.users.find_one({"username": seller_username})
+    if not seller:
+        flash("Seller not found. Notification could not be sent.", "warning")
+        return redirect(url_for('marketplace.view_products'))
+
     seller_id = seller["_id"]
 
-    # Notify the seller about the transaction
+    # ✅ Insert Notification for Seller
     mongo.db.notifications.insert_one({
-        "user_id": ObjectId(seller_id),
+        "user_id": seller_id,
         "type": "transaction",
-        "message": f"{buyer_username} bought your product: {product['product_name']}",
+        "message": f"{buyer_username} bought your product: {product_name}",
         "timestamp": datetime.utcnow(),
         "is_read": False,
         "link": "/marketplace"
     })
 
-    # Send order summary email to buyer
-    msg = Message(
-        subject="Your Order Summary",
-        sender=os.getenv("MAIL_USERNAME"),
-        recipients=[buyer['email']]
-    )
-    msg.body = f"""Hello {buyer_username},
+    # ✅ Email Order Summary to Buyer
+    try:
+        msg = Message(
+            subject="Your Order Summary",
+            sender=os.getenv("MAIL_USERNAME"),
+            recipients=[buyer_email]
+        )
+        msg.body = f"""Hello {buyer_username},
 
 Thank you for your purchase!
 
 Order Details:
-Product: {product['product_name']}
-Price: ${product['product_price']}
+Product: {product_name}
+Price: ${product_price}
 
 Your order will be processed soon.
 
 Regards,
 Your Platform Team
 """
-    try:
-         mail.send(msg)
-         flash("Order summary email sent!", "info")
+        mail.send(msg)
+        flash("Order summary email sent!", "info")
     except Exception as e:
-         flash("Purchase complete but failed to send order summary email.", "warning")
-    
+        flash("Purchase completed but failed to send order summary email.", "warning")
+
+    # ✅ Cleanup OTP session info
+    session.pop('payment_otp', None)
+    session.pop('payment_otp_timestamp', None)
+    session.pop('payment_product_id', None)
+
     flash("Purchase completed successfully!", "success")
     return redirect(url_for('marketplace.view_products'))

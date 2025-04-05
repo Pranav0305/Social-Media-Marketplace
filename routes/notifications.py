@@ -2,8 +2,21 @@ from flask import Blueprint, render_template, session, redirect, url_for
 from extensions import mongo
 from bson import ObjectId
 from datetime import datetime
+from flask import Blueprint, render_template, request, redirect, url_for, flash, session
+
 
 notifications_bp = Blueprint('notifications_bp', __name__)
+@notifications_bp.route('/notifications/clear', methods=['POST'])
+def clear_all_notifications():
+    if 'user_id' not in session:
+        flash("Please log in first.", "danger")
+        return redirect(url_for('auth.login'))
+
+    user_id = ObjectId(session['user_id'])
+    mongo.db.notifications.delete_many({"user_id": user_id})
+    flash("All notifications cleared.", "info")
+    return redirect(url_for('notifications_bp.view_notifications'))
+
 
 @notifications_bp.route('/notifications')
 def view_notifications():

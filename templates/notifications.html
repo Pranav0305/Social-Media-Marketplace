@@ -2,15 +2,24 @@
 {% block title %}Notifications{% endblock %}
 {% block content %}
 <h2>Notifications</h2>
-<ul>
-    {% for notif in notifications %}
-        <li style="margin-bottom: 1rem;">
-            {% if not notif.is_read %}<strong>{% endif %}
-                <a href="{{ notif.link }}">{{ notif.message }}</a>
-                — {{ notif.timestamp.strftime("%Y-%m-%d %H:%M") }}
-            {% if not notif.is_read %}</strong>{% endif %}
-            <a href="{{ url_for('notifications_bp.mark_as_read', notif_id=notif._id) }}">[Mark as read]</a>
-        </li>
-    {% endfor %}
-</ul>
+
+{% if notifications %}
+    <form method="POST" action="{{ url_for('notifications_bp.clear_all_notifications') }}">
+        <button type="submit" style="margin-bottom: 1rem;">🗑️ Clear All</button>
+    </form>
+
+    <ul>
+        {% for notif in notifications %}
+            <li style="margin-bottom: 1rem;">
+                {% if not notif.is_read %}<strong>{% endif %}
+                    <a href="{{ notif.link }}">{{ notif.message }}</a>
+                    — {{ notif.timestamp.strftime("%Y-%m-%d %H:%M") }}
+                {% if not notif.is_read %}</strong>{% endif %}
+                <a href="{{ url_for('notifications_bp.mark_as_read', notif_id=notif._id) }}">[Mark as read]</a>
+            </li>
+        {% endfor %}
+    </ul>
+{% else %}
+    <p>No notifications to show.</p>
+{% endif %}
 {% endblock %}
