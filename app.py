@@ -16,6 +16,7 @@ from bson.objectid import ObjectId  # new
 from extensions import mail
 from dotenv import load_dotenv
 import os
+from routes.cart import cart_bp
 
 from routes.notifications import notifications_bp
 
@@ -26,7 +27,7 @@ app.wsgi_app = ProxyFix(app.wsgi_app, x_proto=1, x_host=1)
 app.register_blueprint(notifications_bp)
 
 app.register_blueprint(search.search_bp)
-
+app.register_blueprint(cart_bp)
 app.config.from_object(Config)
 # Configure secure session cookies
 app.config.update(

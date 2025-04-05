@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Verify Payment OTP</title>
+    <style>
+      body { font-family: Arial, sans-serif; margin: 20px; }
+      form { max-width: 400px; margin: auto; }
+      input { width: 100%; padding: 10px; margin: 10px 0; }
+      button { padding: 10px 20px; background-color: #28a745; color: white; border: none; border-radius: 5px; }
+    </style>
+</head>
+<body>
+    <h2>Enter OTP to Confirm Payment</h2>
+    <p>An OTP has been sent to your registered email. Please enter it below:</p>
+    <form action="{{ url_for('cart.complete_cart_payment') }}" method="POST">
+        <input type="text" name="otp" placeholder="Enter OTP" maxlength="6" required>
+        <button type="submit">Verify OTP</button>
+    </form>
+    <a href="{{ url_for('cart.view_cart') }}">Cancel</a>
+</body>
+</html>
+    
