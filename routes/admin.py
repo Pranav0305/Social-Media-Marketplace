@@ -4,8 +4,16 @@ from extensions import mongo
 from gridfs import GridFS 
 from flask import send_file
 from security.secure_logger import write_secure_log
-
+from flask_mail import Message
+from extensions import mail
+import random
+import time
+import os
 admin_bp = Blueprint('admin', __name__)
+
+
+def generate_otp():
+    return str(random.randint(100000, 999999))
 
 ADMIN_USERNAME = "admin"
 ADMIN_PASSWORD = "password123"
@@ -87,41 +95,86 @@ def view_document(document_id):
     except Exception as e:
         flash("Unable to retrieve document: " + str(e), "danger")
         return redirect(url_for('admin.dashboard'))
-    
 @admin_bp.route('/view_posts')
+@login_required
 def admin_view_posts():
     posts = list(mongo.db.posts.find())
-
-    formatted_posts = []
-    for post in posts:
-        formatted_post = {
+    formatted_posts = [
+        {
             "post_id": post.get("post_id"),
             "post_user": post.get("post_user"),
             "caption": post.get("post_caption"),
             "image": post.get("post_image"),
-            "comments": post.get("comments", [])  # optional field
+            "comments": post.get("comments", [])
         }
-        formatted_posts.append(formatted_post)
-
+        for post in posts
+    ]
     return render_template("admin_view_posts.html", posts=formatted_posts)
 
-@admin_bp.route('/delete_post/<post_id>', methods=['POST'])
-def delete_post(post_id):
+@admin_bp.route('/delete_post_request/<post_id>', methods=['GET'])
+def initiate_delete_post(post_id):
+    otp = generate_otp()
+    session['admin_otp'] = otp
+    session['admin_otp_post_id'] = post_id
+    session['admin_otp_timestamp'] = time.time()
+
+    # Send OTP to admin email
+    msg = Message(
+        subject="Admin OTP for Post Deletion",
+        sender=os.getenv("MAIL_USERNAME"),
+        recipients=["socialmediamarketplace137@gmail.com"]
+    )
+    msg.body = f"""Admin Action Requested:
+
+You are trying to delete post ID: {post_id}
+
+Your OTP is: {otp}
+It will expire in 5 minutes.
+
+If this wasn't you, please ignore.
+"""
+    try:
+        mail.send(msg)
+        flash("OTP sent to admin email. Please verify to proceed.", "info")
+    except Exception as e:
+        flash("Failed to send OTP email.", "danger")
+        print("OTP send error:", e)
+        return redirect(url_for('admin_bp.admin_view_posts'))
+
+    return render_template("admin_verify_otp.html")
+
+@admin_bp.route('/verify_delete_post', methods=['POST'])
+def verify_delete_post():
+    data = request.get_json()
+    entered_otp = data.get('otp')
+    post_id = data.get('post_id')
+
+    post_id = session.get('admin_otp_post_id')
+    actual_otp = session.get('admin_otp')
+    timestamp = session.get('admin_otp_timestamp')
+
+    if not actual_otp or time.time() - timestamp > 300:
+        flash("OTP expired. Try again.", "danger")
+        return redirect(url_for('admin_bp.admin_view_posts'))
+
+    if entered_otp != actual_otp:
+        flash("Invalid OTP.", "danger")
+        write_secure_log("Admin Post Deletion", f"Post ID: {post_id}", "Failed - Incorrect OTP")
+        return redirect(url_for('admin_bp.admin_view_posts'))
+
     result = mongo.db.posts.delete_one({"post_id": post_id})
-    posts = list(mongo.db.posts.find())
 
-    formatted_posts = []
-    for post in posts:
-        formatted_post = {
-            "post_id": post.get("post_id"),
-            "post_user": post.get("post_user"),
-            "caption": post.get("post_caption"),
-            "image": post.get("post_image"),
-            "comments": post.get("comments", [])  # optional field
-        }
-        formatted_posts.append(formatted_post)
-
+    # Log the outcome
     if result.deleted_count > 0:
-        return  render_template("admin_view_posts.html", posts=formatted_posts)
+        write_secure_log("Admin Post Deletion", f"Post ID: {post_id}", "Success")
+        flash("Post deleted successfully.", "success")
     else:
-        return jsonify({"success": False, "message": "Post not found"})
+        write_secure_log("Admin Post Deletion", f"Post ID: {post_id}", "Failed - Post not found")
+        flash("Post not found.", "warning")
+
+    # Clear OTP session
+    session.pop('admin_otp', None)
+    session.pop('admin_otp_timestamp', None)
+    session.pop('admin_otp_post_id', None)
+
+    return redirect(url_for('admin.admin_view_posts'))

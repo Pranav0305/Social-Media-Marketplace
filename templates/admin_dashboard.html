@@ -7,8 +7,7 @@
 {% with messages = get_flashed_messages(with_categories=true) %}
     {% if messages %}
         {% for category, message in messages %}
-            <p style="color: {% if category == 'danger' %}red{% else %}green{% endif %};">
-                {{ message }}
+        <p class="{% if category == 'danger' %}text-danger{% else %}text-success{% endif %}">                {{ message }}
             </p>
         {% endfor %}
     {% endif %}
@@ -50,6 +49,7 @@
 </table>
 
 <script>
+    const csrfToken = "{{ csrf_token() }}";
     document.addEventListener("DOMContentLoaded", function () {
         document.querySelectorAll(".approve-btn, .reject-btn").forEach(button => {
             button.addEventListener("click", function () {
@@ -64,7 +64,11 @@
 
                 fetch(actionUrl, {
                     method: "POST",
-                    headers: { "Content-Type": "application/json" }
+                    headers: {
+                        "Content-Type": "application/json",
+                        "X-CSRFToken": csrfToken
+                    },
+                    credentials: "include" // important for Flask session cookie
                 })
                 .then(response => response.json())
                 .then(data => {

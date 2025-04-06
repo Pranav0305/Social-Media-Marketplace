@@ -46,6 +46,49 @@
     .delete-button:hover {
         background: #bd2130;
     }
+
+    /* OTP Modal Styles */
+    .modal {
+        display: none;
+        position: fixed;
+        z-index: 999;
+        padding-top: 100px;
+        left: 0;
+        top: 0;
+        width: 100%;
+        height: 100%;
+        overflow: auto;
+        background-color: rgba(0,0,0,0.5);
+    }
+    .modal-content {
+        background-color: #fefefe;
+        margin: auto;
+        padding: 20px;
+        border: 1px solid #888;
+        width: 300px;
+        border-radius: 10px;
+        text-align: center;
+    }
+    .virtual-keyboard {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: center;
+        margin-top: 10px;
+    }
+    .key {
+        width: 40px;
+        height: 40px;
+        margin: 5px;
+        font-size: 18px;
+        cursor: pointer;
+    }
+    .otp-input {
+        font-size: 18px;
+        text-align: center;
+        margin: 10px 0;
+        width: 100%;
+        padding: 8px;
+    }
 </style>
 
 <h2 style="text-align: center;">All Posts</h2>
@@ -56,27 +99,26 @@
         <p class="post-user">{{ post.post_user }}</p>
         <img src="data:image/jpeg;base64,{{ post.image }}" alt="Post Image" class="post-image">
         <p class="caption">{{ post.caption }}</p>
-
-        <!-- Delete Button -->
-        <form method="POST" action="{{ url_for('admin.delete_post', post_id=post.post_id) }}" style="margin-top: 10px;">
-            <button type="submit" class="delete-button">Delete Post</button>
-        </form>
+        <button class="delete-button" data-post-id="{{ post.post_id }}">Delete Post</button>
     </div>
     {% endfor %}
 </div>
 
-<script>
-    async function deletePost(postId) {
-        if (!confirm("Are you sure you want to delete this post?")) return;
+<!-- OTP Modal -->
+<div id="otpModal" class="modal">
+    <div class="modal-content">
+        <h3>Enter OTP</h3>
+        
+        <!-- Message area -->
+        <p id="otpStatusMessage" style="color: #007bff; font-weight: bold; display: none;"></p>
 
-        const response = await fetch(`/delete_post/${postId}`, { method: "DELETE" });
+        <input type="password" id="otpInput" class="otp-input" readonly maxlength="6">
+        <div class="virtual-keyboard" id="virtualKeyboard"></div>
+        <button id="submitOtpBtn">Submit OTP</button>
+        <button id="cancelOtpBtn" style="margin-top:10px;">Cancel</button>
+    </div>
+</div>
 
-        const result = await response.json();
-        if (result.success) {
-            document.getElementById(`post-${postId}`).remove();
-        } else {
-            alert("Failed to delete post.");
-        }
-    }
-</script>
+
+<script src="{{ url_for('static', filename='js/admin_view_posts.js') }}"></script>
 {% endblock %}

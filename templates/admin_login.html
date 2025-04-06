@@ -9,15 +9,18 @@
 {% with messages = get_flashed_messages(with_categories=true) %}
     {% if messages %}
         {% for category, message in messages %}
-            <p style="color: {% if category == 'danger' %}red{% else %}green{% endif %};">
-                {{ message }}
+        <p class="{{ 'text-danger' if category == 'danger' else 'text-success' }}">                {{ message }}
             </p>
         {% endfor %}
     {% endif %}
 {% endwith %}
 
 <!-- Login Form -->
+<!-- Login Form -->
 <form method="POST" action="{{ url_for('admin.login') }}">
+    <!-- CSRF Protection -->
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
     <label for="username">Username:</label>
     <input type="text" id="username" name="username" required>
     <br><br>

@@ -13,44 +13,41 @@ def add_post():
         flash('Please log in first.')
         return redirect(url_for('auth.login'))
     return render_template("add_post.html")
+import base64
+
 @posting_bp.route('/upload_post', methods=['POST'])
 def upload():
-    if 'user_id' not in session:  
-        flash("You need to log in first.")
-        return redirect(url_for('auth.login'))
+    if 'user_id' not in session:
+        return jsonify({"success": False, "message": "You need to log in first."}), 401
 
     try:
-        user_id = ObjectId(session['user_id'])  
-        user = mongo.db.users.find_one({"_id": user_id})  
-    except:
-        flash("Invalid user ID.")
-        return redirect(url_for('posting.add_post'))
+        user_id = ObjectId(session['user_id'])
+        user = mongo.db.users.find_one({"_id": user_id})
+        if not user:
+            return jsonify({"success": False, "message": "User not found."}), 404
+    except Exception as e:
+        return jsonify({"success": False, "message": "Invalid user ID."}), 400
 
-    if not user:
-        flash("User not found.")
-        return redirect(url_for('posting.add_post'))
-    
-    caption = request.form.get("caption")
     image = request.files.get("image")
-    username = user.get("username")
+    caption = request.form.get("caption")
 
-    if not caption or not image:
-        flash("Both image and caption are required.", "danger")
-        return redirect(url_for('posting.add_post'))
-
-    image_data = base64.b64encode(image.read()).decode('utf-8')
+    if not image or not caption:
+        return jsonify({"success": False, "message": "Image and caption required."}), 400
 
     post_id = str(ObjectId())
-    post_data = {
-        "post_id": post_id,
-        "post_image": image_data,
-        "post_caption": caption,
-        "post_user": username
-    }
 
-    mongo.db.posts.insert_one(post_data)
-    flash("Post uploaded successfully!", "success")
-    return redirect(url_for('posting.view_posts'))  # ✅ Redirect to post list
+    # ✅ Convert image to base64 string
+    image_data = base64.b64encode(image.read()).decode("utf-8")
+
+    mongo.db.posts.insert_one({
+        "post_id": post_id,
+        "post_user": user["username"],
+        "post_caption": caption,
+        "post_image": image_data,  # now stored as base64 string
+        "comments": []
+    })
+
+    return jsonify({"success": True, "message": "Post uploaded successfully!"}), 200
 
 @posting_bp.route('/view_posts')
 def view_posts():

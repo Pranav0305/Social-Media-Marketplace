@@ -104,7 +104,7 @@
 <h2 style="text-align: center;">All Posts</h2>
 
 <div style="text-align: center; margin-bottom: 20px;">
-    <button class="create-post-btn" onclick="window.location.href='{{ url_for('posting.add_post') }}'">Create Post</button>
+    <button class="create-post-btn" id="createPostBtn">Create Post</button>
 </div>
 
 <div class="posts-container">
@@ -124,12 +124,14 @@
 
             <!-- Comment Form -->
             <form method="POST" action="{{ url_for('comment.add_comment', post_id=post.post_id) }}">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                 <input type="text" name="text" class="comment-box" placeholder="Write a comment..." required>
                 <button type="submit" class="comment-submit">Post</button>
-            </form>
+            </form>            
         </div>
     </div>
     {% endfor %}
 </div>
+<script src="{{ url_for('static', filename='js/view_posts.js') }}"></script>
 
 {% endblock %}
