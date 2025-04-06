@@ -6,3 +6,4 @@ flask-login
 pycryptodome
 dotenv
 flask_mail
+flask_wtf

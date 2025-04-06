@@ -32,6 +32,8 @@
     </table>
     <p>Total: ${{ total }}</p>
     <form method="POST">
+        <!-- CSRF Protection -->
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
         <button type="submit">Place Order (Receive OTP)</button>
     </form>
     <a href="{{ url_for('cart.view_cart') }}">Back to Cart</a>

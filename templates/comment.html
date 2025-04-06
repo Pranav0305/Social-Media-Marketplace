@@ -31,6 +31,8 @@
     <div class="comment-container">
         <h2>Add a Comment</h2>
         <form method="POST">
+            <!-- CSRF Protection -->
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
             <textarea name="comment" placeholder="Write a comment..." required></textarea>
             <button type="submit">Post Comment</button>
         </form>

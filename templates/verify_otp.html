@@ -1,6 +1,8 @@
 <h2>Enter OTP to Verify Registration</h2>
 
 <form method="POST" id="otpForm">
+    <!-- CSRF Protection -->
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
     <input type="text" id="otpInput" name="otp" placeholder="Enter OTP" readonly required style="font-size: 18px; padding: 8px;" maxlength="6">
 
     <div id="keyboard" style="margin-top: 15px;">

@@ -16,6 +16,9 @@
 {% endwith %}
 
 <form method="POST" enctype="multipart/form-data" onsubmit="return validatePassword()">
+    <!-- CSRF Protection -->
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
     <label for="username">Username:</label>
     <input type="text" id="username" name="username" required><br><br>
 

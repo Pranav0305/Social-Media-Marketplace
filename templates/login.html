@@ -11,6 +11,8 @@
 {% else %}
     <h2>Login</h2>
     <form method="POST">
+        <!-- CSRF Protection -->
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
         <label>Username:</label>
         <input type="text" name="username" required><br>
 
