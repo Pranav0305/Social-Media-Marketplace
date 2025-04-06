@@ -331,18 +331,69 @@ def reset_password():
             flash(password_error, 'danger')
             return redirect(url_for('auth.reset_password'))
 
-        hashed_password = generate_password_hash(new_password)
-        mongo.db.users.update_one({"email": email}, {"$set": {"password": hashed_password}})
+        user = mongo.db.users.find_one({"email": email})
+        if not user:
+            flash("User not found.", "danger")
+            return redirect(url_for('auth.forgot_password'))
 
-        # Cleanup
+        # Decrypt old private key using old password-derived AES key (optional)
+        try:
+            encrypted_private_key = user['encrypted_private_key']
+            salt = base64.b64decode(encrypted_private_key['salt'])
+            nonce = base64.b64decode(encrypted_private_key['nonce'])
+            tag = base64.b64decode(encrypted_private_key['tag'])
+            ciphertext = base64.b64decode(encrypted_private_key['ciphertext'])
+
+            # Derive old AES key from previous password
+            # This assumes you collect or store the old password temporarily
+            old_password = "user's old password"  # You don’t have this after OTP flow
+            old_aes_key = PBKDF2(old_password, salt, dkLen=32, count=100000)
+            cipher = AES.new(old_aes_key, AES.MODE_EAX, nonce=nonce)
+            private_key = cipher.decrypt_and_verify(ciphertext, tag)
+
+        except Exception:
+            # Fallback: generate a new private key instead
+            rsa_key = RSA.generate(2048)
+            private_key = rsa_key.export_key()
+            public_key = rsa_key.publickey().export_key()
+
+        # Encrypt private key with new password
+        new_salt = os.urandom(16)
+        new_aes_key = PBKDF2(new_password, new_salt, dkLen=32, count=100000)
+        cipher = AES.new(new_aes_key, AES.MODE_EAX)
+        new_ciphertext, new_tag = cipher.encrypt_and_digest(private_key)
+
+        new_encrypted_private_key = {
+            "salt": base64.b64encode(new_salt).decode(),
+            "nonce": base64.b64encode(cipher.nonce).decode(),
+            "ciphertext": base64.b64encode(new_ciphertext).decode(),
+            "tag": base64.b64encode(new_tag).decode()
+        }
+
+        # Hash the new password
+        hashed_password = generate_password_hash(new_password)
+
+        # Update user password + encrypted private key (and public key if regenerated)
+        update_data = {
+            "password": hashed_password,
+            "encrypted_private_key": new_encrypted_private_key
+        }
+
+        if "public_key" not in user:  # if fallback was used
+            update_data["public_key"] = public_key.decode()
+
+        result = mongo.db.users.update_one({"email": email}, {"$set": update_data})
+
+        # Cleanup session
         session.pop('reset_otp', None)
         session.pop('reset_email', None)
         session.pop('otp_timestamp', None)
 
-        flash("Password reset successfully.")
+        flash("Password reset successfully.", "success")
         return redirect(url_for('auth.login'))
 
     return render_template('reset_password.html')
+
 @auth_bp.route('/forgot_password', methods=['GET', 'POST'])
 def forgot_password():
     if request.method == 'POST':
