@@ -68,3 +68,4 @@ def view_posts():
     ]
 
     return render_template("view_posts.html", posts=formatted_posts)
+

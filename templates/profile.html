@@ -22,7 +22,6 @@
             {% else %}
             <img src="{{ url_for('static', filename='default_profile.jpeg') }}" width="150" alt="Default Profile Picture">
             {% endif %}
-
         </p>
 
         <!-- Bio -->
@@ -40,7 +39,6 @@
                             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                             <button type="submit">Accept</button>
                         </form>
-                        
                         <form method="POST" action="{{ url_for('profile_bp.reject_friend_request', request_id=req.request_id) }}" style="display:inline;">
                             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                             <button type="submit">Reject</button>
@@ -58,9 +56,7 @@
                 <ul>
                 {% for friend in friends %}
                     <li>
-                        <a href="{{ url_for('profile_bp.profile_view', user_id=friend._id) }}">
-                            {{ friend.username }}
-                        </a>
+                        <a href="{{ url_for('profile_bp.profile_view', user_id=friend._id) }}">{{ friend.username }}</a>
                     </li>
                 {% endfor %}
                 </ul>
@@ -74,33 +70,33 @@
                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                 <label for="bio">Bio:</label>
                 <textarea id="bio" name="bio">{{ user.profile.bio }}</textarea><br><br>
-            
+
                 <label for="profile_picture">Upload Profile Picture:</label>
                 <input type="file" id="profile_picture" name="profile_picture" accept=".png, .jpg, .jpeg"><br><br>
-            
-                <button type="submit">Update Profile</button>
-            </form>            
 
-            <!-- Registration Document Link -->
+                <button type="submit">Update Profile</button>
+            </form>
+
+            <!-- Registration Document -->
             {% if user.document %}
                 <h3>Uploaded Registration Document</h3>
-                <p>
-                    <a href="{{ url_for('profile_bp.view_document', document_id=user.document) }}" target="_blank">View Document</a>
-                </p>
+                <p><a href="{{ url_for('profile_bp.view_document', document_id=user.document) }}" target="_blank">View Document</a></p>
             {% else %}
                 <p>No registration document uploaded.</p>
             {% endif %}
 
+            <!-- My Posts -->
+            <h3>My Posts</h3>
+            <p><a href="{{ url_for('profile_bp.view_user_posts', user_id=user._id) }}">View Your Posts</a></p>
+
         {% else %}
-            <!-- Friends List of Another User -->
+            <!-- Friends of Other User -->
             <h3>{{ user.username }}'s Friends</h3>
             {% if friends|length > 0 %}
                 <ul>
                 {% for friend in friends %}
                     <li>
-                        <a href="{{ url_for('profile_bp.profile_view', user_id=friend._id) }}">
-                            {{ friend.username }}
-                        </a>
+                        <a href="{{ url_for('profile_bp.profile_view', user_id=friend._id) }}">{{ friend.username }}</a>
                     </li>
                 {% endfor %}
                 </ul>
@@ -108,7 +104,7 @@
                 <p>No friends to display.</p>
             {% endif %}
 
-            <!-- Social Features -->
+            <!-- Social Actions -->
             <h3>Social Actions</h3>
             <form method="POST" action="{{ url_for('profile_bp.send_friend_request', user_id=user._id) }}">
                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
@@ -126,8 +122,12 @@
                 <textarea name="reason" rows="3" cols="40" placeholder="Enter reason..."></textarea><br>
                 <button type="submit">Report User</button>
             </form>
-                    
+
+            <!-- Posts by This User -->
+            <h3>{{ user.username }}'s Posts</h3>
+            <p><a href="{{ url_for('profile_bp.view_user_posts', user_id=user._id) }}">View Posts</a></p>
         {% endif %}
     {% endif %}
+
     <script src="{{ url_for('static', filename='js/edit_profile.js') }}"></script>
 {% endblock %}

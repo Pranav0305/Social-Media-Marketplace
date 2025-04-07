@@ -278,3 +278,29 @@ def uploaded_file(filename):
         mimetype=file.content_type,
         download_name=filename  # for Flask 2.2+ compatibility
     )
+
+@profile_bp.route('/my_posts/<user_id>')
+def view_user_posts(user_id):
+    if 'user_id' not in session:
+        flash("Please log in to view posts.")
+        return redirect(url_for('auth.login'))
+
+    user = mongo.db.users.find_one({'_id': ObjectId(user_id)})
+    if not user:
+        flash("User not found.")
+        return redirect(url_for('main.home'))
+
+    posts = list(mongo.db.posts.find({'post_user': user['username']}))
+
+    formatted_posts = [
+        {
+            "post_id": post["post_id"],
+            "post_user": post["post_user"],
+            "caption": post["post_caption"],
+            "image": post["post_image"],
+            "comments": post.get("comments", [])
+        }
+        for post in posts
+    ]
+
+    return render_template("user_posts.html", posts=formatted_posts, user=user)
