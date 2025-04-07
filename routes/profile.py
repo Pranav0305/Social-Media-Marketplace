@@ -138,41 +138,75 @@ def profile():
         friend_requests=requests_with_senders,
         friends=friends
     )
-
-@profile_bp.route('/<user_id>')
-def profile_view(user_id):
+@profile_bp.route('/profile/', methods=['GET', 'POST'])
+def profile_view():
     if 'user_id' not in session:
         flash("You need to log in first.")
         return redirect(url_for('auth.login'))
 
-    user_data = mongo.db.users.find_one({"_id": ObjectId(user_id)})
-    if not user_data:
+    user_id = ObjectId(session['user_id'])
+    user = mongo.db.users.find_one({'_id': user_id})
+    if not user:
         flash("User not found.")
-        return redirect(url_for('profile_bp.profile'))
+        return redirect(url_for('auth.login'))
 
-    is_own_profile = str(session['user_id']) == str(user_id)
+    if request.method == 'POST':
+        bio = request.form.get('bio')
+        profile_picture = request.files.get('profile_picture')
+
+        # Update bio
+        mongo.db.users.update_one({'_id': user['_id']}, {'$set': {'profile.bio': bio}})
+
+        # Profile picture via GridFS
+        if profile_picture and allowed_file(profile_picture.filename):
+            fs = GridFS(mongo.db)
+
+            # Delete old profile picture from GridFS (if it exists)
+            prev_filename = user.get("profile", {}).get("profile_picture")
+            if prev_filename:
+                existing_file = mongo.db.fs.files.find_one({'filename': prev_filename})
+                if existing_file:
+                    fs.delete(existing_file['_id'])
+
+            # Save new profile picture to GridFS
+            filename = secure_filename(profile_picture.filename)
+            fs.put(profile_picture, filename=filename, content_type=profile_picture.content_type)
+            mongo.db.users.update_one({'_id': user['_id']}, {'$set': {'profile.profile_picture': filename}})
+
+        flash('Profile updated successfully!', 'success')
+        return redirect(url_for('profile_bp.profile_view'))
+
+    # Re-fetch user after update
+    user = mongo.db.users.find_one({'_id': user_id})
+
+    # Build data for template
+    incoming_requests = mongo.db.friend_requests.find({
+        "to_user": user_id, "status": "pending"
+    })
+
+    requests_with_senders = []
+    for req in incoming_requests:
+        sender = mongo.db.users.find_one({"_id": req["from_user"]})
+        if sender:
+            requests_with_senders.append({
+                "request_id": str(req["_id"]),
+                "sender_username": sender.get("username"),
+                "sender_id": str(sender["_id"])
+            })
 
     accepted = mongo.db.friend_requests.find({
-        "$or": [
-            {"from_user": ObjectId(user_id)},
-            {"to_user": ObjectId(user_id)}
-        ],
+        "$or": [{"from_user": user_id}, {"to_user": user_id}],
         "status": "accepted"
     })
 
-    friend_ids = []
-    for fr in accepted:
-        if fr["from_user"] == ObjectId(user_id):
-            friend_ids.append(fr["to_user"])
-        else:
-            friend_ids.append(fr["from_user"])
-
+    friend_ids = [fr["from_user"] if fr["from_user"] != user_id else fr["to_user"] for fr in accepted]
     friends = list(mongo.db.users.find({"_id": {"$in": friend_ids}}))
 
     return render_template(
         'profile.html',
-        user=user_data,
-        is_own_profile=is_own_profile,
+        user=user,
+        is_own_profile=True,
+        friend_requests=requests_with_senders,
         friends=friends
     )
 
@@ -205,3 +239,18 @@ def view_document(document_id):
     except Exception as e:
         flash("Unable to retrieve document: " + str(e), "danger")
         return redirect(url_for('profile_bp.profile'))
+from flask import send_file, abort
+from gridfs import GridFS
+
+@profile_bp.route('/uploads/<filename>')
+def uploaded_file(filename):
+    fs = GridFS(mongo.db)
+    file = fs.find_one({'filename': filename})
+    if not file:
+        abort(404)
+    
+    return send_file(
+        file,
+        mimetype=file.content_type,
+        download_name=filename  # for Flask 2.2+ compatibility
+    )

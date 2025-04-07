@@ -18,10 +18,11 @@
         <!-- Profile Picture -->
         <p>
             {% if user.profile.profile_picture %}
-                <img src="{{ url_for('uploaded_file', filename=user.profile.profile_picture) }}" width="150" alt="Profile Picture">
+            <img src="{{ url_for('profile_bp.uploaded_file', filename=user.profile.profile_picture) }}" width="150" alt="Profile Picture">
             {% else %}
-                <img src="{{ url_for('static', filename='default_profile.jpg') }}" width="150" alt="Default Profile Picture">
+            <img src="{{ url_for('static', filename='default_profile.jpeg') }}" width="150" alt="Default Profile Picture">
             {% endif %}
+
         </p>
 
         <!-- Bio -->
@@ -36,11 +37,14 @@
                     <li>
                         {{ req.sender_username }}
                         <form method="POST" action="{{ url_for('profile_bp.accept_friend_request', request_id=req.request_id) }}" style="display:inline;">
+                            {{ csrf_token() }}
                             <button type="submit">Accept</button>
                         </form>
+                        
                         <form method="POST" action="{{ url_for('profile_bp.reject_friend_request', request_id=req.request_id) }}" style="display:inline;">
+                            {{ csrf_token() }}
                             <button type="submit">Reject</button>
-                        </form>
+                        </form>                        
                     </li>
                 {% endfor %}
                 </ul>
@@ -66,15 +70,16 @@
 
             <!-- Edit Profile Form -->
             <h3>Edit Profile</h3>
-            <form method="POST" enctype="multipart/form-data">
+            <form id="editProfileForm" method="POST" enctype="multipart/form-data">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                 <label for="bio">Bio:</label>
                 <textarea id="bio" name="bio">{{ user.profile.bio }}</textarea><br><br>
-
+            
                 <label for="profile_picture">Upload Profile Picture:</label>
                 <input type="file" id="profile_picture" name="profile_picture" accept=".png, .jpg, .jpeg"><br><br>
-
+            
                 <button type="submit">Update Profile</button>
-            </form>
+            </form>            
 
             <!-- Registration Document Link -->
             {% if user.document %}
@@ -106,18 +111,23 @@
             <!-- Social Features -->
             <h3>Social Actions</h3>
             <form method="POST" action="{{ url_for('profile_bp.send_friend_request', user_id=user._id) }}">
+                {{ csrf_token() }}
                 <button type="submit">Send Friend Request</button>
-            </form>
+            </form>            
             <br>
             <form method="POST" action="{{ url_for('profile_bp.block_user', user_id=user._id) }}">
+                {{ csrf_token() }}
                 <button type="submit" onclick="return confirm('Are you sure you want to block this user?')">Block User</button>
-            </form>
+            </form>            
             <br>
             <form method="POST" action="{{ url_for('profile_bp.report_user', user_id=user._id) }}">
+                {{ csrf_token() }}
                 <label for="reason">Report Reason:</label><br>
                 <textarea name="reason" rows="3" cols="40" placeholder="Enter reason..."></textarea><br>
                 <button type="submit">Report User</button>
             </form>
+                    
         {% endif %}
     {% endif %}
+    <script src="{{ url_for('static', filename='js/edit_profile.js') }}"></script>
 {% endblock %}
