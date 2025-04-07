@@ -142,39 +142,43 @@ If this wasn't you, please ignore.
         return redirect(url_for('admin_bp.admin_view_posts'))
 
     return render_template("admin_verify_otp.html")
-
 @admin_bp.route('/verify_delete_post', methods=['POST'])
 def verify_delete_post():
     data = request.get_json()
     entered_otp = data.get('otp')
     post_id = data.get('post_id')
 
-    post_id = session.get('admin_otp_post_id')
+    actual_post_id = session.get('admin_otp_post_id')
     actual_otp = session.get('admin_otp')
     timestamp = session.get('admin_otp_timestamp')
 
-    if not actual_otp or time.time() - timestamp > 300:
-        flash("OTP expired. Try again.", "danger")
-        return redirect(url_for('admin_bp.admin_view_posts'))
+    # Expired OTP
+    if not actual_otp or not timestamp or time.time() - timestamp > 300:
+        return jsonify({"success": False, "message": "OTP expired. Please request a new one."}), 400
 
+    # Wrong OTP
     if entered_otp != actual_otp:
-        flash("Invalid OTP.", "danger")
         write_secure_log("Admin Post Deletion", f"Post ID: {post_id}", "Failed - Incorrect OTP")
-        return redirect(url_for('admin_bp.admin_view_posts'))
+        return jsonify({"success": False, "message": "Invalid OTP."}), 401
 
-    result = mongo.db.posts.delete_one({"post_id": post_id})
-
-    # Log the outcome
+    # Delete post
+    result = mongo.db.posts.delete_one({"post_id": actual_post_id})
     if result.deleted_count > 0:
-        write_secure_log("Admin Post Deletion", f"Post ID: {post_id}", "Success")
-        flash("Post deleted successfully.", "success")
+        write_secure_log("Admin Post Deletion", f"Post ID: {actual_post_id}", "Success")
+        message = "Post deleted successfully."
+        success = True
     else:
-        write_secure_log("Admin Post Deletion", f"Post ID: {post_id}", "Failed - Post not found")
-        flash("Post not found.", "warning")
+        write_secure_log("Admin Post Deletion", f"Post ID: {actual_post_id}", "Failed - Post not found")
+        message = "Post not found."
+        success = False
 
-    # Clear OTP session
+    # Clear session OTP
     session.pop('admin_otp', None)
     session.pop('admin_otp_timestamp', None)
     session.pop('admin_otp_post_id', None)
 
-    return redirect(url_for('admin.admin_view_posts'))
+    return jsonify({
+        "success": success,
+        "message": message,
+        "new_status": "deleted" if success else "not_found"
+    })

@@ -10,7 +10,7 @@
     <ul>
       {% for user in users %}
         <li>
-          <a href="{{ url_for('profile_bp.profile_view', user_id=user._id) }}">
+          <a href="{{ url_for('profile_bp.profile_view_other', user_id=user._id) }}">
             {{ user.username }} ({{ user.email }})
           </a>
         </li>

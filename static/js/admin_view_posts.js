@@ -67,12 +67,20 @@ document.addEventListener("DOMContentLoaded", () => {
             })
         })
         .then(async res => {
+            const contentType = res.headers.get("content-type") || "";
             if (!res.ok) {
                 const text = await res.text();
                 throw new Error(`HTTP ${res.status}: ${text}`);
             }
-            return res.json();
+        
+            if (contentType.includes("application/json")) {
+                return res.json();
+            } else {
+                const text = await res.text();
+                throw new Error("Expected JSON but got HTML: " + text.substring(0, 100));
+            }
         })        
+            
         .then(data => {
             if (data.success) {
                 document.getElementById(`post-${selectedPostId}`).remove();

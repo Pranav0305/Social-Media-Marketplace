@@ -241,6 +241,30 @@ def view_document(document_id):
         return redirect(url_for('profile_bp.profile'))
 from flask import send_file, abort
 from gridfs import GridFS
+@profile_bp.route('/profile/<user_id>')
+def profile_view_other(user_id):
+    try:
+        user = mongo.db.users.find_one({"_id": ObjectId(user_id)})
+        if not user:
+            flash("User not found.")
+            return redirect(url_for('profile_bp.profile_view'))
+
+        current_user_id = ObjectId(session['user_id'])
+        is_own_profile = (user['_id'] == current_user_id)
+
+        # Load friend requests and friends like before
+        # You can reuse the same logic
+
+        return render_template(
+            'profile.html',
+            user=user,
+            is_own_profile=is_own_profile,
+            friend_requests=[],
+            friends=[]
+        )
+    except Exception as e:
+        flash(f"Invalid user ID.")
+        return redirect(url_for('profile_bp.profile_view'))
 
 @profile_bp.route('/uploads/<filename>')
 def uploaded_file(filename):

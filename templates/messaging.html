@@ -18,15 +18,20 @@
             </a>
         </p>
         <form method="POST" enctype="multipart/form-data">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        
             <label>Recipient Username:</label> 
             <input type="text" name="recipient" required><br>
+        
             <label>Message:</label> 
             <textarea name="message" required></textarea><br>
+        
             <label>Media File (optional):</label>
             <input type="file" name="media"><br>
+        
             <input type="submit" value="Send Message">
         </form>
-
+        
         <h3>Your Messages</h3>
         <ul>
             {% for msg in messages %}
@@ -34,7 +39,6 @@
                 <strong>From:</strong> {{ msg.sender_username }} |
                 <strong>To:</strong> {{ msg.recipient_username }}<br>
                 <strong>Message:</strong> {{ msg.message }}<br>
-                <strong>Message Hash:</strong> {{ msg.hash }}<br>
                 {% if msg.media_file %}
                     <strong>Media:</strong>
                     {% if msg.media_type and 'image' in msg.media_type %}

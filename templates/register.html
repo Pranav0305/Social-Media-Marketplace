@@ -15,7 +15,7 @@
     {% endif %}
 {% endwith %}
 
-<form method="POST" enctype="multipart/form-data" onsubmit="return validatePassword()">
+<form id="registerForm" method="POST" enctype="multipart/form-data">
     <!-- CSRF Protection -->
     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
 
@@ -26,7 +26,7 @@
     <input type="email" id="email" name="email" required><br><br>
 
     <label for="password">Password:</label>
-    <input type="password" id="password" name="password" onkeyup="checkPasswordStrength()" required><br>
+    <input type="password" id="password" name="password" required><br>
 
     <!-- Password Strength Rules -->
     <div id="password-rules">
@@ -50,32 +50,6 @@
 <!-- Footer Link -->
 <p>Already have an account? <a href="{{ url_for('auth.login') }}">Login here</a></p>
 
-<script>
-function checkPasswordStrength() {
-    let password = document.getElementById("password").value;
-    
-    document.getElementById("length-rule").style.color = password.length >= 8 ? "green" : "red";
-    document.getElementById("uppercase-rule").style.color = /[A-Z]/.test(password) ? "green" : "red";
-    document.getElementById("lowercase-rule").style.color = /[a-z]/.test(password) ? "green" : "red";
-    document.getElementById("number-rule").style.color = /\d/.test(password) ? "green" : "red";
-    document.getElementById("special-rule").style.color = /[!@#$%^&*(),.?":{}|<>]/.test(password) ? "green" : "red";
-}
-
-function validatePassword() {
-    let password = document.getElementById("password").value;
-
-    let lengthValid = password.length >= 8;
-    let uppercaseValid = /[A-Z]/.test(password);
-    let lowercaseValid = /[a-z]/.test(password);
-    let numberValid = /\d/.test(password);
-    let specialValid = /[!@#$%^&*(),.?":{}|<>]/.test(password);
-
-    if (!lengthValid || !uppercaseValid || !lowercaseValid || !numberValid || !specialValid) {
-        alert("Your password does not meet the security requirements.");
-        return false;  // Prevent form submission
-    }
-    return true;  // Allow form submission
-}
-</script>
+<script src="{{ url_for('static', filename='js/register.js') }}"></script>
 
 {% endblock %}
