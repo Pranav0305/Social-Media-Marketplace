@@ -65,11 +65,19 @@
     {% endif %}
 
     <div class="flag-actions">
-      <form method="POST" action="{{ url_for('admin.ignore_flag', post_id=post.post_id) }}" style="display:inline-block;">
-          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-          <button type="submit" class="btn-ignore">❌ Ignore Flag</button>
-      </form>
-    </div>
+        <!-- Ignore Flag Button -->
+        <form method="POST" action="{{ url_for('admin.ignore_flag', post_id=post.post_id) }}" style="display:inline-block; margin-right: 10px;">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <button type="submit" class="btn-ignore">❌ Ignore Flag</button>
+        </form>
+      
+        <!-- Delete Flagged Post Button -->
+        <form method="POST" action="{{ url_for('admin.delete_flagged_post', post_id=post.post_id) }}" style="display:inline-block;" onsubmit="return confirm('Are you sure you want to delete this flagged post?');">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <button type="submit" class="btn-ignore" style="background-color: darkred;">🗑️ Delete Post</button>
+        </form>
+      </div>
+      
   </div>
   {% endfor %}
 {% else %}

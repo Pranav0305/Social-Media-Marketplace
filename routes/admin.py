@@ -14,6 +14,7 @@ from security.secure_logger import verify_logs
 
 admin_bp = Blueprint('admin', __name__)
 
+
 def generate_otp():
     return str(random.randint(100000, 999999))
 
@@ -73,10 +74,10 @@ def logout():
     flash("You have been logged out.", "info")
     write_secure_log("Admin", ADMIN_USERNAME, "logged out")
     return redirect(url_for('admin.login'))
-
 @admin_bp.route('/')
 def admin_home():
-    return redirect(url_for('admin.dashboard'))
+    return redirect(url_for('admin.login'))
+
 LOGS_DIR = 'logs'
 
 @admin_bp.route('/secure_logs')
@@ -190,15 +191,57 @@ If this wasn't you, please ignore.
     try:
         mail.send(msg)
         flash("OTP sent to admin email. Please verify to proceed.", "info")
-        write_secure_log("Admin OTP Sent", f"Post ID: {post_id}", "Success")
-
     except Exception as e:
         flash("Failed to send OTP email.", "danger")
-        write_secure_log("Admin OTP Sent", f"Post ID: {post_id}", f"Failed - {str(e)}")
         print("OTP send error:", e)
         return redirect(url_for('admin_bp.admin_view_posts'))
 
     return render_template("admin_verify_otp.html")
+@admin_bp.route('/reported_users')
+def reported_users():
+    if 'admin_logged_in' not in session:
+        flash("Unauthorized access.", "danger")
+        return redirect(url_for('admin.login'))
+
+    reports = list(mongo.db.reports.find().sort("timestamp", -1))
+    reported_info = []
+
+    for report in reports:
+        reporter = mongo.db.users.find_one({"_id": report["reporter"]})
+        reported = mongo.db.users.find_one({"_id": report["reported"]})
+
+        if reporter and reported:
+            reported_info.append({
+                "report_id": str(report["_id"]),
+                "reporter_username": reporter.get("username", "Unknown"),
+                "reported_username": reported.get("username", "Unknown"),
+                "reported_user_id": str(reported["_id"]),
+                "reason": report["reason"],
+                "timestamp": report["timestamp"].strftime("%Y-%m-%d %H:%M")
+            })
+
+    return render_template("admin_reported_users.html", reports=reported_info)
+
+@admin_bp.route('/ignore_report/<report_id>', methods=['POST'])
+def ignore_report(report_id):
+    mongo.db.reports.delete_one({"_id": ObjectId(report_id)})
+    flash("Report ignored.", "success")
+    return redirect(url_for('admin.reported_users'))
+
+@admin_bp.route('/delete_reported_user/<user_id>', methods=['POST'])
+def delete_reported_user(user_id):
+    mongo.db.users.delete_one({"_id": ObjectId(user_id)})
+    mongo.db.posts.delete_many({"post_user": user_id})
+    mongo.db.reports.delete_many({"reported": ObjectId(user_id)})
+    flash("Reported user and their posts deleted.", "danger")
+    return redirect(url_for('admin.reported_users'))
+
+@admin_bp.route('/delete_report/<report_id>', methods=['POST'])
+def delete_report(report_id):
+    mongo.db.reports.delete_one({"_id": ObjectId(report_id)})
+    flash("Report ignored.")
+    return redirect(url_for('admin_bp.view_reports'))
+
 
 @admin_bp.route('/verify_delete_post', methods=['POST'])
 def verify_delete_post():
@@ -247,4 +290,23 @@ def ignore_flag(post_id):
     write_secure_log("Admin Flag Ignored", f"Post ID: {post_id}", f"Removed {result.deleted_count} flags")
     flash("Flag(s) ignored for this post.", "info")
     return redirect(url_for('admin.flagged_posts'))
+@admin_bp.route('/delete_flagged_post/<post_id>', methods=['POST'])
+@login_required
+def delete_flagged_post(post_id):
+    # Delete the post
+    post_result = mongo.db.posts.delete_one({"post_id": post_id})
+
+    # Delete all flags related to this post
+    flag_result = mongo.db.flags.delete_many({"post_id": post_id})
+
+    # Log the action
+    if post_result.deleted_count > 0:
+        flash("Flagged post and its flags deleted successfully.", "success")
+    else:
+        write_secure_log("Admin Flagged Post Deletion", f"Post ID: {post_id}", "Failed - Post not found")
+        flash("Post not found or already deleted.", "danger")
+
+    return redirect(url_for('admin.flagged_posts'))
+
+
 

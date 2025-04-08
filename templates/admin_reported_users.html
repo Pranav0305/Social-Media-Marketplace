@@ -1,0 +1,35 @@
+<h3 style="margin-top: 3rem;">Reported Users</h3>
+{% if reports %}
+<table border="1" cellpadding="5">
+    <tr>
+        <th>Reported User</th>
+        <th>Reported By</th>
+        <th>Reason</th>
+        <th>Timestamp</th>
+        <th>Actions</th>
+    </tr>
+    {% for report in reports %}
+    <tr>
+        <td>{{ report.reported_username }}</td>
+        <td>{{ report.reporter_username }}</td>
+        <td>{{ report.reason }}</td>
+        <td>{{ report.timestamp }}</td>
+        <td>
+            <!-- Ignore Report -->
+            <form method="POST" action="{{ url_for('admin.ignore_report', report_id=report.report_id) }}" style="display:inline;">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <button type="submit">Ignore</button>
+            </form>
+
+            <!-- Delete Reported User -->
+            <form method="POST" action="{{ url_for('admin.delete_reported_user', user_id=report.reported_user_id) }}" style="display:inline;" onsubmit="return confirm('Are you sure you want to delete this user?');">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <button type="submit" style="background-color: darkred; color: white;">Delete User</button>
+            </form>
+        </td>
+    </tr>
+    {% endfor %}
+</table>
+{% else %}
+<p>No reports found.</p>
+{% endif %}

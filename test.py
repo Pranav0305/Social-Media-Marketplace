@@ -1,16 +1,10 @@
-from extensions import mongo
-from app import app
+from pymongo import MongoClient
 from bson import ObjectId
 
-with app.app_context():
-    # Find the most recent post where 'post_image' is binary (i.e., not a base64 string)
-    faulty_post = mongo.db.posts.find_one(
-        { "post_image": { "$type": "binData" } },
-        sort=[('_id', -1)]  # newest first
-    )
+# Connect to your MongoDB
+client = MongoClient("mongodb://localhost:27017")
+db = client.your_database_name  # Replace with your DB name
 
-    if faulty_post:
-        result = mongo.db.posts.delete_one({ "_id": faulty_post["_id"] })
-        print(f"✅ Deleted post with _id: {faulty_post['_id']}")
-    else:
-        print("✅ No faulty post with binary image found.")
+# Find the most recently inserted post
+post = db.posts.find_one(sort=[("_id", -1)])  # Gets the newest post
+print(post)

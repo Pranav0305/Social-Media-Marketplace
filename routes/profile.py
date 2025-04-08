@@ -50,26 +50,36 @@ def accept_friend_request(request_id):
     )
     flash("Friend request accepted.")
     return redirect(url_for('profile_bp.profile'))
-
 @profile_bp.route('/block_user/<user_id>', methods=['POST'])
 def block_user(user_id):
+    if 'user_id' not in session:
+        flash("You need to log in first.")
+        return redirect(url_for('auth.login'))
+
     mongo.db.blocks.insert_one({
         "blocker": ObjectId(session['user_id']),
-        "blocked": ObjectId(user_id)
+        "blocked": ObjectId(user_id),
+        "timestamp": datetime.utcnow()
     })
-    flash("User blocked.")
-    return redirect(url_for('profile_bp.profile_view', user_id=user_id))
 
+    flash("User has been blocked.")
+    return redirect(url_for('home.home'))  # or profile_bp.profile
 @profile_bp.route('/report_user/<user_id>', methods=['POST'])
 def report_user(user_id):
     reason = request.form.get('reason')
+    if not reason:
+        flash("Please provide a reason for reporting.")
+        return redirect(url_for('profile_bp.profile_view_other', user_id=user_id))
+
     mongo.db.reports.insert_one({
         "reporter": ObjectId(session['user_id']),
         "reported": ObjectId(user_id),
-        "reason": reason
+        "reason": reason,
+        "timestamp": datetime.utcnow()
     })
-    flash("User reported.")
-    return redirect(url_for('profile_bp.profile_view', user_id=user_id))
+
+    flash("Thank you for reporting. Our team will review the issue.")
+    return redirect(url_for('home.home'))  # or some thank-you page
 
 @profile_bp.route('/', methods=['GET', 'POST'])
 def profile():
@@ -288,7 +298,7 @@ def view_user_posts(user_id):
     user = mongo.db.users.find_one({'_id': ObjectId(user_id)})
     if not user:
         flash("User not found.")
-        return redirect(url_for('main.home'))
+        return redirect(url_for('home.home'))
 
     posts = list(mongo.db.posts.find({'post_user': user['username']}))
 

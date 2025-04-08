@@ -84,10 +84,12 @@ document.addEventListener("DOMContentLoaded", () => {
         .then(data => {
             if (data.success) {
                 document.getElementById(`post-${selectedPostId}`).remove();
+                alert(data.message || "Post deleted successfully."); // ✅ Show success message
                 closeOtpModal();
             } else {
                 alert(data.message || "Invalid OTP.");
             }
+            
         })
         .catch(err => {
             console.error("Error:", err);
