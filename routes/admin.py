@@ -9,6 +9,8 @@ from extensions import mail
 import random
 import time
 import os
+from security.secure_logger import verify_logs
+
 
 admin_bp = Blueprint('admin', __name__)
 
@@ -26,6 +28,28 @@ def login_required(f):
         return f(*args, **kwargs)
     wrap.__name__ = f.__name__
     return wrap
+@admin_bp.route('/flagged_posts')
+@login_required
+def flagged_posts():
+    flags = list(mongo.db.flags.find())
+    flagged_post_ids = [flag['post_id'] for flag in flags]
+    flagged_posts = list(mongo.db.posts.find({"post_id": {"$in": flagged_post_ids}}))
+    
+    post_flags = {flag["post_id"]: [] for flag in flags}
+    for flag in flags:
+        post_flags[flag["post_id"]].append({
+            "by": flag["flagged_by"],
+            "reason": flag["reason"],
+            "time": flag["timestamp"]
+        })
+    
+    return render_template("admin_flagged_posts.html", posts=flagged_posts, flags=post_flags)
+
+@admin_bp.route("/verify_log_integrity")
+def verify_log_integrity():
+    tampered = verify_logs() 
+    write_secure_log("Log Integrity Check", ADMIN_USERNAME, f"{'Tampered entries found' if tampered else 'No issues'}")
+    return render_template("verify_logs.html", tampered=tampered)
 
 @admin_bp.route('/login', methods=['GET', 'POST'])
 def login():
@@ -53,12 +77,30 @@ def logout():
 @admin_bp.route('/')
 def admin_home():
     return redirect(url_for('admin.dashboard'))
+LOGS_DIR = 'logs'
+
+@admin_bp.route('/secure_logs')
+def secure_logs():
+    log_dir = 'logs'
+    logs = []
+
+    for filename in sorted(os.listdir(log_dir)):
+        if filename.startswith("secure_log_") and filename.endswith(".txt"):
+            with open(os.path.join(log_dir, filename), 'r') as f:
+                content = f.read()
+                logs.append({'filename': filename, 'content': content})
+    write_secure_log("Admin Viewed Logs", ADMIN_USERNAME, "Success")
+
+    return render_template('secure_logs.html', logs=logs)
+
 
 @admin_bp.route('/dashboard')
 @login_required
 def dashboard():
     users = list(mongo.db.users.find())  
+    write_secure_log("Viewed Dashboard", ADMIN_USERNAME, "Success")
     return render_template('admin_dashboard.html', users=users)
+
 
 @admin_bp.route('/approve_user/<user_id>', methods=['POST'])
 @login_required
@@ -148,8 +190,11 @@ If this wasn't you, please ignore.
     try:
         mail.send(msg)
         flash("OTP sent to admin email. Please verify to proceed.", "info")
+        write_secure_log("Admin OTP Sent", f"Post ID: {post_id}", "Success")
+
     except Exception as e:
         flash("Failed to send OTP email.", "danger")
+        write_secure_log("Admin OTP Sent", f"Post ID: {post_id}", f"Failed - {str(e)}")
         print("OTP send error:", e)
         return redirect(url_for('admin_bp.admin_view_posts'))
 
@@ -195,3 +240,11 @@ def verify_delete_post():
         "message": message,
         "new_status": "deleted" if success else "not_found"
     })
+@admin_bp.route('/ignore_flag/<post_id>', methods=['POST'])
+@login_required
+def ignore_flag(post_id):
+    result = mongo.db.flags.delete_many({"post_id": post_id})
+    write_secure_log("Admin Flag Ignored", f"Post ID: {post_id}", f"Removed {result.deleted_count} flags")
+    flash("Flag(s) ignored for this post.", "info")
+    return redirect(url_for('admin.flagged_posts'))
+

@@ -1,0 +1,79 @@
+{% extends "layout.html" %}
+{% block title %}Flagged Posts{% endblock %}
+
+{% block content %}
+<h2 style="text-align: center;">🚩 Flagged Posts for Review</h2>
+
+{% with messages = get_flashed_messages(with_categories=true) %}
+  {% if messages %}
+    {% for category, message in messages %}
+      <div class="alert alert-{{ category }}" style="text-align: center;">
+        {{ message }}
+      </div>
+    {% endfor %}
+  {% endif %}
+{% endwith %}
+
+<style>
+  .flagged-post {
+    width: 600px;
+    margin: 20px auto;
+    background-color: #fff;
+    border: 1px solid #ccc;
+    padding: 20px;
+    border-radius: 10px;
+  }
+  .flagged-post img {
+    max-width: 100%;
+    border-radius: 8px;
+  }
+  .flag-meta {
+    font-size: 0.9em;
+    color: #555;
+  }
+  .flag-actions {
+    margin-top: 10px;
+  }
+  .btn-ignore {
+    background-color: #6c757d;
+    color: white;
+    padding: 6px 12px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+  }
+</style>
+
+{% if posts %}
+  {% for post in posts %}
+  <div class="flagged-post" id="flagged-post-{{ post.post_id }}">
+    <h4>{{ post.post_user }}'s Post</h4>
+    <img src="data:image/jpeg;base64,{{ post.post_image }}" alt="Flagged Post Image">
+    <p><strong>Caption:</strong> {{ post.post_caption }}</p>
+
+    <h5>🚩 Flags:</h5>
+    {% if flags[post.post_id] %}
+      <ul>
+        {% for flag in flags[post.post_id] %}
+        <li class="flag-meta">
+          <strong>{{ flag.by }}</strong> flagged this as <em>{{ flag.reason }}</em>
+        </li>
+        {% endfor %}
+      </ul>
+    {% else %}
+      <p>No flag details available.</p>
+    {% endif %}
+
+    <div class="flag-actions">
+      <form method="POST" action="{{ url_for('admin.ignore_flag', post_id=post.post_id) }}" style="display:inline-block;">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <button type="submit" class="btn-ignore">❌ Ignore Flag</button>
+      </form>
+    </div>
+  </div>
+  {% endfor %}
+{% else %}
+  <p style="text-align: center;">No flagged posts found 🎉</p>
+{% endif %}
+
+{% endblock %}

@@ -5,6 +5,7 @@
 
 {% if notifications %}
     <form method="POST" action="{{ url_for('notifications_bp.clear_all_notifications') }}">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
         <button type="submit" style="margin-bottom: 1rem;">🗑️ Clear All</button>
     </form>
 

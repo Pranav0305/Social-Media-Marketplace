@@ -205,6 +205,7 @@ def reset_password():
         # Validate OTP and expiration
         if otp != session.get('reset_otp') or time.time() - session.get('otp_timestamp', 0) > 300:
             flash("Invalid or expired OTP.")
+            write_secure_log("Password Reset", session.get('reset_email', 'unknown'), "Failed - Invalid or expired OTP")
             return redirect(url_for('auth.forgot_password'))
 
         email = session.get('reset_email')
@@ -276,6 +277,7 @@ def reset_password():
         session.pop('otp_timestamp', None)
 
         flash("Password reset successfully.", "success")
+        write_secure_log("Password Reset", email, "Success")
         return redirect(url_for('auth.login'))
 
     return render_template('reset_password.html')
@@ -334,6 +336,7 @@ If this wasn't you, please ignore this email.
 def logout():
     session.clear()
     flash('Logged out successfully.')
+    write_secure_log("User Logout", session.get("username", "unknown"), "Success")
     return redirect(url_for('auth.login'))
 @auth_bp.context_processor
 def inject_notification_count():

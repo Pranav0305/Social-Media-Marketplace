@@ -103,6 +103,16 @@
 
 <h2 style="text-align: center;">All Posts</h2>
 
+{% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+        {% for category, message in messages %}
+            <div class="alert alert-{{ category }}" style="text-align:center; padding: 10px; margin: 10px auto; width: 60%;">
+                {{ message }}
+            </div>
+        {% endfor %}
+    {% endif %}
+{% endwith %}
+
 <div style="text-align: center; margin-bottom: 20px;">
     <button class="create-post-btn" id="createPostBtn">Create Post</button>
 </div>
@@ -127,7 +137,25 @@
                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                 <input type="text" name="text" class="comment-box" placeholder="Write a comment..." required>
                 <button type="submit" class="comment-submit">Post</button>
-            </form>            
+            </form>
+            <!-- Flag Post Form -->
+            <form action="/flag_post/{{ post.post_id }}" method="POST" style="margin-top: 8px;">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            
+                <label for="reason-{{ post.post_id }}" style="font-size: 0.9em;">Why are you flagging this post?</label><br>
+                <select name="reason" id="reason-{{ post.post_id }}" required>
+                    <option value="">Select reason</option>
+                    <option value="Spam">Spam</option>
+                    <option value="Harassment">Harassment</option>
+                    <option value="Hate speech">Hate speech</option>
+                    <option value="Misinformation">Misinformation</option>
+                    <option value="Other">Other</option>
+                </select><br><br>
+            
+                <button type="submit" style="color: red;">🚩 Flag Post</button>
+            </form>
+            
+            
         </div>
     </div>
     {% endfor %}

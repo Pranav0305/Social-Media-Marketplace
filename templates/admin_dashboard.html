@@ -20,6 +20,23 @@
 {% endwith %}
 
 <a href="{{ url_for('admin.logout') }}" style="float: right; background-color: red; color: white; padding: 5px 10px; text-decoration: none;">Logout</a>
+<a href="{{ url_for('admin.admin_view_posts') }}" 
+   style="display: inline-block; background-color: #007BFF; color: white; padding: 8px 16px; text-decoration: none; margin-bottom: 1rem; border-radius: 4px;">
+   Manage Posts
+</a>
+<a href="{{ url_for('admin.secure_logs') }}" 
+   style="display: inline-block; background-color: #28a745; color: white; padding: 8px 16px; text-decoration: none; margin-bottom: 1rem; border-radius: 4px;">
+   View Secure Logs
+</a>
+<a href="{{ url_for('admin.verify_log_integrity') }}" 
+   style="display: inline-block; background-color: #ffc107; color: black; padding: 8px 16px; text-decoration: none; margin-bottom: 1rem; border-radius: 4px;">
+   Verify Log Integrity
+</a>
+<a href="{{ url_for('admin.flagged_posts') }}" 
+   style="display: inline-block; background-color: #ffc107; color: black; padding: 8px 16px; text-decoration: none; margin-bottom: 1rem; border-radius: 4px;">
+   View Flagged Posts
+</a>
+
 
 <table border="1" cellpadding="5">
     <tr>

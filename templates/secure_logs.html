@@ -1,0 +1,15 @@
+{% extends "layout.html" %}
+{% block title %}Secure Logs{% endblock %}
+
+{% block content %}
+<h2>🔒 Secure Logs</h2>
+
+<a href="{{ url_for('admin.dashboard') }}" style="background-color: gray; color: white; padding: 5px 10px; text-decoration: none;">⬅ Back to Dashboard</a>
+
+{% for log in logs %}
+    <div style="border: 1px solid #ccc; padding: 10px; margin: 10px 0; background-color: #f9f9f9;">
+        <h4>{{ log.filename }}</h4>
+        <pre style="white-space: pre-wrap;">{{ log.content }}</pre>
+    </div>
+{% endfor %}
+{% endblock %}
