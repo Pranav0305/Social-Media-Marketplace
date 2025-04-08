@@ -205,7 +205,7 @@ def load_user(user_id):
     return User(user_data) if user_data else None
 
 app.register_blueprint(auth_bp)
-app.register_blueprint(admin_bp, url_prefix='/WhxxoG3LG7XD9fY')
+app.register_blueprint(admin_bp, url_prefix='/admin')
 app.register_blueprint(profile_bp, url_prefix='/profile')
 app.register_blueprint(messaging_bp)
 app.register_blueprint(home_bp)

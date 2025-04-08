@@ -353,6 +353,8 @@
 
 #     flash("Purchase completed successfully!", "success")
 #     return redirect(url_for('marketplace.view_products'))
+
+
 from flask import Blueprint, render_template, request, redirect, url_for, flash, session, jsonify, current_app
 from extensions import mongo, mail
 from datetime import datetime
@@ -377,22 +379,28 @@ def marketplace():
 @p2p_marketplace_bp.route("/confirm_product", methods=['POST'])
 def add_product():
     if 'user_id' not in session:
-        return jsonify({"message": "User not logged in"}), 401
+        flash('Please log in first.', "warning")
+        return redirect(url_for('auth.login'))
 
     try:
         user_id = ObjectId(session['user_id'])
         user = mongo.db.users.find_one({"_id": user_id})
     except Exception as e:
-        return jsonify({"message": "Invalid user ID format"}), 400
+        flash("Invalid user ID format", "danger")
+        return redirect(url_for('marketplace.marketplace'))
 
     if not user:
-        return jsonify({"message": "User not found"}), 400
+        flash("User not found", "danger")
+        return redirect(url_for('auth.login'))
 
     username = user.get("username")
-    data = request.json
+    # Retrieve form data instead of JSON data
+    data = request.form
 
+    # Ensure the required fields are present
     if not all(key in data for key in ["product_name", "product_price", "product_description"]):
-        return jsonify({"message": "Missing fields"}), 400
+        flash("Missing required fields. Please fill in all the details.", "danger")
+        return redirect(url_for('marketplace.marketplace'))
 
     product_id = str(ObjectId())
     product = {
@@ -404,7 +412,8 @@ def add_product():
     }
 
     mongo.db.Products.insert_one(product)
-    return jsonify({"message": "Product added successfully!", "product_id": product_id})
+    flash("Product added successfully!", "success")
+    return redirect(url_for('marketplace.view_products'))
 
 
 @p2p_marketplace_bp.route("/view_products")
@@ -422,7 +431,8 @@ def view_products():
         products_cursor = mongo.db.Products.find({})
     products = list(products_cursor)
     for product in products:
-        if isinstance(product["_id"], ObjectId):
+        # Convert ObjectId to string (if needed)
+        if isinstance(product.get("_id"), ObjectId):
             product["_id"] = str(product["_id"])
     return render_template("view_products.html", products=products, search_query=search_query)
 
@@ -436,7 +446,6 @@ def buy_product(product_id):
     if not product:
         return "Product not found", 404
     return render_template("payment_gateway.html", product=product)
-
 
 # ---------------- New OTP Payment Endpoints ----------------
 
@@ -536,7 +545,7 @@ def complete_payment(product_id):
 
     seller_id = seller["_id"]
 
-    # ✅ Insert Notification for Seller
+    # Insert Notification for Seller
     mongo.db.notifications.insert_one({
         "user_id": seller_id,
         "type": "transaction",
@@ -546,7 +555,7 @@ def complete_payment(product_id):
         "link": "/marketplace"
     })
 
-    # ✅ Email Order Summary to Buyer
+    # Email Order Summary to Buyer
     try:
         msg = Message(
             subject="Your Order Summary",
@@ -571,10 +580,11 @@ Your Platform Team
     except Exception as e:
         flash("Purchase completed but failed to send order summary email.", "warning")
 
-    # ✅ Cleanup OTP session info
+    # Cleanup OTP session info
     session.pop('payment_otp', None)
     session.pop('payment_otp_timestamp', None)
     session.pop('payment_product_id', None)
 
     flash("Purchase completed successfully!", "success")
     return redirect(url_for('marketplace.view_products'))
+

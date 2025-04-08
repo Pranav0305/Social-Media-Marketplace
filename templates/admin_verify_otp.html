@@ -4,10 +4,13 @@
 {% block content %}
 <h2>Enter OTP to Confirm Deletion</h2>
 
+<!-- The form does not have an action attribute because we use AJAX for submission -->
 <form method="POST" id="otpForm">
     <label for="otpInput">OTP:</label>
     <input type="text" id="otpInput" name="otp" readonly maxlength="6"
            style="font-size: 18px; padding: 8px;" required />
+    <!-- Hidden input to store the post ID -->
+    <input type="hidden" id="postId" name="post_id" value="{{ session['admin_otp_post_id'] }}">
 
     <!-- Virtual Keyboard -->
     <div id="keyboard" style="margin-top: 15px;">
@@ -16,7 +19,6 @@
                 {% for col in [1, 2, 3] %}
                     {% set digit = row * 3 + col %}
                     <button type="button" class="digit-button" data-digit="{{ digit }}">{{ digit }}</button>
-
                 {% endfor %}
             </div>
         {% endfor %}
@@ -29,6 +31,12 @@
 
     <button type="submit" style="margin-top: 15px;">Confirm Delete</button>
 </form>
-<script src="{{ url_for('static', filename='js/admin_verify_otp.js') }}"></script>
 
+<!-- Inject the verification URL for use in admin_verify_otp.js -->
+<script>
+    // The URL for the OTP verification endpoint; this will account for the admin blueprint's prefix
+    var verifyUrl = "{{ url_for('admin.verify_delete_post') }}";
+</script>
+<!-- Include the JavaScript file that handles the OTP form submission via AJAX -->
+<script src="{{ url_for('static', filename='js/admin_verify_otp.js') }}"></script>
 {% endblock %}
