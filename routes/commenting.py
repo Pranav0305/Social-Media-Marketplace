@@ -22,28 +22,6 @@ def add_comment(post_id):
         return jsonify({"message": "User not found"}), 400
     
     username = user.get("username")
-    
-    # data = request.get_json()
-    # post_id = data.get("post_id")
-    # comment_text = data.get("text")
-
-    # print(post_id)
-
-    # if not post_id or not comment_text:
-    #     return jsonify({"success": False, "message": "Missing data"}), 400
-    
-    # comment = {
-    #     "username": username,
-    #     "text": comment_text
-    # }
-
-    # # Insert comment into the correct post
-    # mongo.db.posts.update_one(
-    #     {"post_id": ObjectId(post_id)},
-    #     {"$push": {"comments": comment}}
-    # )
-
-    # return jsonify({"success": True, "username": username})
 
 
     comment_text = request.form.get("text")

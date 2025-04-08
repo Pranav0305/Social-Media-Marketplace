@@ -1,13 +1,19 @@
 {% extends "layout.html" %}
 {% block title %}Admin Dashboard{% endblock %}
 
+{% block head %}
+  <!-- Include CSRF token meta for AJAX calls -->
+  <meta name="csrf-token" content="{{ csrf_token() }}">
+{% endblock %}
+
 {% block content %}
 <h2>Admin Dashboard</h2>
 
 {% with messages = get_flashed_messages(with_categories=true) %}
     {% if messages %}
         {% for category, message in messages %}
-        <p class="{% if category == 'danger' %}text-danger{% else %}text-success{% endif %}">                {{ message }}
+            <p class="{% if category == 'danger' %}text-danger{% else %}text-success{% endif %}">
+                {{ message }}
             </p>
         {% endfor %}
     {% endif %}
@@ -21,7 +27,8 @@
         <th>Username</th>
         <th>Document</th>
         <th>Status</th>
-        <th>Action</th>
+        <th>Actions</th>
+        <th>Delete</th>
     </tr>
     {% for user in users %}
     <tr id="user-row-{{ user._id }}">
@@ -29,7 +36,6 @@
         <td>{{ user.username }}</td>
         <td>
             {% if user.document and user.document != "" %}
-                <!-- Updated link to use the admin route that retrieves the GridFS file -->
                 <a href="{{ url_for('admin.view_document', document_id=user.document) }}" target="_blank">View Document</a>
             {% else %}
                 <span style="color: red;">No Document</span>
@@ -44,8 +50,13 @@
                 <strong>{{ user.status | capitalize }}</strong>
             {% endif %}
         </td>
+        <td>
+            <!-- Delete button for user removal -->
+            <button class="delete-btn" data-url="{{ url_for('admin.delete_user', user_id=user._id) }}" data-userid="{{ user._id }}" style="background-color: darkred; color: white;">Delete</button>
+        </td>
     </tr>
     {% endfor %}
 </table>
+
 <script src="{{ url_for('static', filename='js/admin_dashboard.js') }}"></script>
 {% endblock %}

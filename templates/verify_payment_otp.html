@@ -1,3 +1,42 @@
+<!-- <!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Verify Payment OTP</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 20px;
+    }
+    form {
+      max-width: 400px;
+    }
+    input {
+      width: 100%;
+      padding: 8px;
+      margin-top: 10px;
+    }
+    button {
+      margin-top: 15px;
+      padding: 10px 20px;
+      background-color: #28a745;
+      color: white;
+      border: none;
+      border-radius: 5px;
+    }
+  </style>
+</head>
+<body>
+  <h2>Payment OTP Verification</h2>
+  <p>An OTP has been sent to your registered email. Please enter it below to confirm your payment.</p>
+  <form action="{{ url_for('marketplace.complete_payment', product_id=product_id) }}" method="POST">
+      <input type="text" name="otp" placeholder="Enter OTP" required maxlength="6">
+      <button type="submit">Verify OTP</button>
+  </form>
+  <p><a href="{{ url_for('marketplace.view_products') }}">Cancel Payment</a></p>
+</body>
+</html> -->
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -30,6 +69,9 @@
   <h2>Payment OTP Verification</h2>
   <p>An OTP has been sent to your registered email. Please enter it below to confirm your payment.</p>
   <form action="{{ url_for('marketplace.complete_payment', product_id=product_id) }}" method="POST">
+      <!-- CSRF token -->
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      
       <input type="text" name="otp" placeholder="Enter OTP" required maxlength="6">
       <button type="submit">Verify OTP</button>
   </form>

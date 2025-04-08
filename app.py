@@ -109,7 +109,6 @@
 # if __name__ == '__main__':
 #     app.run(ssl_context=('cert.pem', 'key.pem'), host='0.0.0.0', port=5000, debug=False)
 
-import os
 from flask import Flask, send_from_directory
 from config import Config
 from extensions import mongo, login_manager  
@@ -127,6 +126,7 @@ from routes import profile, search
 from bson.objectid import ObjectId
 from extensions import mail
 from dotenv import load_dotenv
+import os
 from routes.cart import cart_bp
 from routes.notifications import notifications_bp
 from flask_wtf import CSRFProtect
@@ -135,22 +135,14 @@ load_dotenv()  # Load environment variables from .env file
 
 app = Flask(__name__)
 app.wsgi_app = ProxyFix(app.wsgi_app, x_proto=1, x_host=1)
-app.config.from_object(Config)
 
-# Register blueprints with fixed URL prefixes.
+# Register blueprints
 app.register_blueprint(notifications_bp)
 app.register_blueprint(search.search_bp)
 app.register_blueprint(cart_bp)
-app.register_blueprint(auth_bp, url_prefix=Config.RANDOM_URLS.get('auth'))
-app.register_blueprint(admin_bp, url_prefix=Config.RANDOM_URLS.get('admin'))
-app.register_blueprint(profile_bp, url_prefix=Config.RANDOM_URLS.get('profile'))
-app.register_blueprint(messaging_bp, url_prefix=Config.RANDOM_URLS.get('messaging'))
-app.register_blueprint(home_bp)  # Home routes remain public.
-app.register_blueprint(p2p_marketplace_bp, url_prefix=Config.RANDOM_URLS.get('p2p_marketplace'))
-app.register_blueprint(posting_bp, url_prefix=Config.RANDOM_URLS.get('posting'))
-app.register_blueprint(comment_bp, url_prefix=Config.RANDOM_URLS.get('commenting'))
+app.config.from_object(Config)
 
-# Configure secure session cookies.
+# Configure secure session cookies
 app.config.update(
     SESSION_COOKIE_SECURE=True,    # Cookie is only sent over HTTPS
     SESSION_COOKIE_HTTPONLY=True,    # Cookie is not accessible via JavaScript
@@ -168,17 +160,17 @@ app.config.update(
 
 mail.init_app(app)
 
-# Initialize CSRF protection for all POST routes and forms.
+# Initialize CSRF protection for all POST routes and forms
 csrf = CSRFProtect(app)
 
-# Set cache control and security headers after every request (XSS-related headers).
+# Set cache control and security headers after every request (XSS-related headers)
 @app.after_request
 def set_security_headers(response):
-    # Cache-control headers.
+    # Cache-control headers
     response.headers['Cache-Control'] = 'no-store, no-cache, must-revalidate, max-age=0'
     response.headers['Pragma'] = 'no-cache'
     response.headers['Expires'] = '-1'
-    # XSS protection headers.
+    # XSS protection headers
     response.headers['X-XSS-Protection'] = '1; mode=block'
     response.headers['Content-Security-Policy'] = (
         "default-src 'self'; "
@@ -194,12 +186,12 @@ app.register_blueprint(group_messaging_bp)
 mongo.init_app(app)
 UPLOAD_FOLDER = 'static/uploads/'
 
-@app.route('/uploads/<filename>')
+@app.route('/uploads/<filename>')  
 def uploaded_file(filename):
     return send_from_directory(UPLOAD_FOLDER, filename)
 
-login_manager.init_app(app)
-login_manager.login_view = "auth.login"
+login_manager.init_app(app)  
+login_manager.login_view = "auth.login"  
 
 class User(UserMixin):
     def __init__(self, user_data):
@@ -212,7 +204,17 @@ def load_user(user_id):
     user_data = mongo.db.users.find_one({"_id": ObjectId(user_id)})
     return User(user_data) if user_data else None
 
+app.register_blueprint(auth_bp)
+app.register_blueprint(admin_bp, url_prefix='/admin')
+app.register_blueprint(profile_bp, url_prefix='/profile')
+app.register_blueprint(messaging_bp)
+app.register_blueprint(home_bp)
+app.register_blueprint(p2p_marketplace_bp)
+app.register_blueprint(posting_bp)
+app.register_blueprint(comment_bp)
+
 from flask_mail import Message
+from extensions import mail
 
 if __name__ == '__main__':
     app.run(ssl_context=('cert.pem', 'key.pem'), host='0.0.0.0', port=5000, debug=False)

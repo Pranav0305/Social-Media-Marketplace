@@ -9,8 +9,8 @@ from extensions import mail
 import random
 import time
 import os
-admin_bp = Blueprint('admin', __name__)
 
+admin_bp = Blueprint('admin', __name__)
 
 def generate_otp():
     return str(random.randint(100000, 999999))
@@ -80,6 +80,17 @@ def reject_user(user_id):
     except Exception as e:
         return jsonify({"success": False, "error": str(e)})
 
+@admin_bp.route('/delete_user/<user_id>', methods=['POST'])
+@login_required
+def delete_user(user_id):
+    try:
+        # Remove the user document from the database
+        mongo.db.users.delete_one({"_id": ObjectId(user_id)})
+        write_secure_log("Admin Deletion", user_id, "User Deleted")
+        return jsonify({"success": True, "message": "User deleted successfully."})
+    except Exception as e:
+        return jsonify({"success": False, "message": str(e)})
+
 @admin_bp.route('/document/<document_id>')
 @login_required
 def view_document(document_id):
@@ -95,6 +106,7 @@ def view_document(document_id):
     except Exception as e:
         flash("Unable to retrieve document: " + str(e), "danger")
         return redirect(url_for('admin.dashboard'))
+
 @admin_bp.route('/view_posts')
 @login_required
 def admin_view_posts():
@@ -142,6 +154,7 @@ If this wasn't you, please ignore.
         return redirect(url_for('admin_bp.admin_view_posts'))
 
     return render_template("admin_verify_otp.html")
+
 @admin_bp.route('/verify_delete_post', methods=['POST'])
 def verify_delete_post():
     data = request.get_json()
