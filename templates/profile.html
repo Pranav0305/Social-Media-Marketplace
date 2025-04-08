@@ -54,9 +54,13 @@
                 <ul>
                 {% for friend in friends %}
                     <li>
+<<<<<<< Updated upstream
                         <a href="{{ url_for('profile_bp.profile_view', user_id=friend._id) }}">
                             {{ friend.username }}
                         </a>
+=======
+                        <a href="{{ url_for('profile_bp.profile_view_other', user_id=friend._id) }}">{{ friend.username }}</a>
+>>>>>>> Stashed changes
                     </li>
                 {% endfor %}
                 </ul>
@@ -91,9 +95,13 @@
                 <ul>
                 {% for friend in friends %}
                     <li>
+<<<<<<< Updated upstream
                         <a href="{{ url_for('profile_bp.profile_view', user_id=friend._id) }}">
                             {{ friend.username }}
                         </a>
+=======
+                        <a href="{{ url_for('profile_bp.profile_view_other', user_id=friend._id) }}">{{ friend.username }}</a>
+>>>>>>> Stashed changes
                     </li>
                 {% endfor %}
                 </ul>
@@ -109,11 +117,25 @@
                 <button type="submit">Send Friend Request</button>
             </form>
             <br>
+<<<<<<< Updated upstream
 
             <!-- Block User -->
             <form method="POST" action="{{ url_for('profile_bp.block_user', user_id=user._id) }}">
                 <button type="submit" onclick="return confirm('Are you sure you want to block this user?')">Block User</button>
             </form>
+=======
+            {% if is_blocked %}
+                <form method="POST" action="{{ url_for('profile_bp.unblock_user', user_id=user._id) }}">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <button type="submit" onclick="return confirm('Are you sure you want to unblock this user?')">Unblock User</button>
+                </form>
+            {% else %}
+                <form method="POST" action="{{ url_for('profile_bp.block_user', user_id=user._id) }}">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <button type="submit" onclick="return confirm('Are you sure you want to block this user?')">Block User</button>
+                </form>
+            {% endif %}
+>>>>>>> Stashed changes
             <br>
 
             <!-- Report User -->

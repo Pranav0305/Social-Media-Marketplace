@@ -1,3 +1,4 @@
+<<<<<<< Updated upstream
 {"timestamp": "2025-04-03 15:41:11", "user_id": "admin", "action": "Admin", "status": "logged out"} | 3a9ca0573be1e83c8eb9662485386cbd8a337be94f9501ef17b97a6194ec438d
 {"timestamp": "2025-04-03 15:42:20", "user_id": "pranav123", "action": "User Registered", "status": "Success"} | 222d0e65fc30bdb14d9deb120e830dc96015995db83cda35b47fb5cc94215fbf
 {"timestamp": "2025-04-03 15:42:29", "user_id": "admin", "action": "User Login", "status": "Failed"} | 087d21bb0fb3bb4d172fab45c630f9e2ade413fe4eb316d8fba582e1fb854f23
@@ -6,3 +7,18 @@
 {"timestamp": "2025-04-03 15:42:53", "user_id": "pranav123", "action": "User Login", "status": "Success"} | b104d4e24477888a23ddbac31c9fdfbb9524f6822ab06b653e675f4c299e0d0f
 {"timestamp": "2025-04-03 22:42:31", "user_id": "pranav123", "action": "User Login", "status": "Failed"} | 20af427a03afe058231ddefa6ff550ede5a845b3abb7a197fa5145a9148da0b4
 {"timestamp": "2025-04-03 22:42:40", "user_id": "pranav123", "action": "User Login", "status": "Success"} | 4a799aef7e49a5b5042d29565575a5aa4fad18bcc72403f6b3e32e489aecbaed
+=======
+{"timestamp": "2025-04-08 22:04:42", "user_id": "cat", "action": "User Login", "status": "Success"} | bd0f59c88357e02175f0ae7e3685ab9376f849b73520408797c623d5d726fcd3
+{"timestamp": "2025-04-08 22:05:03", "user_id": "unknown", "action": "User Logout", "status": "Success"} | 89d5b5abba157dc7e4a1ae605e296fed9c74e31e2f9ec880d668e2a3cdd244e4
+{"timestamp": "2025-04-08 22:09:10", "user_id": "cat", "action": "User Login", "status": "Failed"} | 0c2490032a464fbd7a7b6ee827cab724ed7f68850a3988967c8b1719b85de56a
+{"timestamp": "2025-04-08 22:09:16", "user_id": "cat", "action": "User Login", "status": "Success"} | 718b95b9158878ea4dcd54dc2696c9fb1abdc3862a68b0edbc0b4a940d780d5e
+{"timestamp": "2025-04-08 22:10:53", "user_id": "unknown", "action": "User Logout", "status": "Success"} | 661b02f4eacc38f37b0d77950a95f168bd5489a536341348b160607d12fee7f7
+{"timestamp": "2025-04-08 22:11:00", "user_id": "you", "action": "User Login", "status": "Success"} | 312ad9d9ed4ec2a0863a032f2983e3cc6c6066bc546f40c8e0ed0f602360dcdb
+{"timestamp": "2025-04-08 22:11:17", "user_id": "unknown", "action": "User Logout", "status": "Success"} | 2c5a34e2a4bd90f74aa984ec006db146c19ec1ba8d4ab1a67aac968d4629f069
+{"timestamp": "2025-04-08 22:11:24", "user_id": "cat", "action": "User Login", "status": "Success"} | 0719d1dcfe01c0d4df303ae9ce82f5b002a2c7dee4cfc4a28c90d7a6b294449f
+{"timestamp": "2025-04-08 22:11:52", "user_id": "unknown", "action": "User Logout", "status": "Success"} | 054a4762c48b19d12f4151b284be2c9c553f1b025839c22789185be6514ca295
+{"timestamp": "2025-04-08 22:11:58", "user_id": "you", "action": "User Login", "status": "Success"} | 69c47d258ea3212fd05fae93b4654d1fff9bd139da14981f01c9b62ce3d86c72
+{"timestamp": "2025-04-08 22:12:31", "user_id": "unknown", "action": "User Logout", "status": "Success"} | 6a42135c280a3560766ef48be56d1c5a707cc554dbf8e9a02b74002c2bf1fc6e
+{"timestamp": "2025-04-08 22:15:27", "user_id": "cat", "action": "User Login", "status": "Failed"} | 7d7fcd91997e5f36138848c1ce1d57e148bc9ff39901d4fcec4763b3b34fe7fe
+{"timestamp": "2025-04-08 22:15:32", "user_id": "cat", "action": "User Login", "status": "Success"} | ee329f2177538874dc17913489f164988480ca169bd618b1013be4294d6ed283
+>>>>>>> Stashed changes
